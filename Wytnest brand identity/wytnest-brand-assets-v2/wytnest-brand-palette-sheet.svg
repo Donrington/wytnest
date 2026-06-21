@@ -1,0 +1,126 @@
+<svg width="800" height="640" viewBox="0 0 800 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="640" fill="#FAFAF8"/>
+
+  <!-- Header -->
+  <text x="40" y="52" font-family="system-ui,sans-serif" font-size="22" font-weight="700" letter-spacing="-0.5" fill="#141414">Wytnest Brand Identity</text>
+  <text x="40" y="74" font-family="system-ui,sans-serif" font-size="12" font-weight="400" letter-spacing="0.5" fill="#8F8CAF">Color System · Version 1.0 · CyberSage</text>
+  <line x1="40" y1="90" x2="760" y2="90" stroke="#E8E8E5" stroke-width="0.75"/>
+
+  <!-- Section: Primary Brand -->
+  <text x="40" y="118" font-family="system-ui,sans-serif" font-size="9" font-weight="600" letter-spacing="2.5" fill="#8F8CAF">PRIMARY BRAND</text>
+
+  <!-- Ink Violet swatches -->
+  <rect x="40"  y="130" width="80" height="72" rx="8" fill="#F0EFFE"/>
+  <rect x="128" y="130" width="80" height="72" rx="8" fill="#D4CFFE"/>
+  <rect x="216" y="130" width="80" height="72" rx="8" fill="#B0A8FC"/>
+  <rect x="304" y="130" width="80" height="72" rx="8" fill="#7B6EF5"/>
+  <rect x="392" y="130" width="80" height="72" rx="8" fill="#4F3FCC"/>
+  <rect x="480" y="130" width="80" height="72" rx="8" fill="#2E1F99"/>
+  <rect x="568" y="130" width="80" height="72" rx="8" fill="#150D5C"/>
+
+  <text x="80"  y="222" font-family="system-ui,sans-serif" font-size="8.5" font-weight="500" fill="#2A2748" text-anchor="middle">#F0EFFE</text>
+  <text x="168" y="222" font-family="system-ui,sans-serif" font-size="8.5" font-weight="500" fill="#2A2748" text-anchor="middle">#D4CFFE</text>
+  <text x="256" y="222" font-family="system-ui,sans-serif" font-size="8.5" font-weight="500" fill="#2A2748" text-anchor="middle">#B0A8FC</text>
+  <text x="344" y="222" font-family="system-ui,sans-serif" font-size="8.5" font-weight="500" fill="#F0EFFE" text-anchor="middle">#7B6EF5</text>
+  <text x="432" y="222" font-family="system-ui,sans-serif" font-size="8.5" font-weight="500" fill="#D4CFFE" text-anchor="middle">#4F3FCC</text>
+  <text x="520" y="222" font-family="system-ui,sans-serif" font-size="8.5" font-weight="500" fill="#B0A8FC" text-anchor="middle">#2E1F99</text>
+  <text x="608" y="222" font-family="system-ui,sans-serif" font-size="8.5" font-weight="500" fill="#7B6EF5" text-anchor="middle">#150D5C</text>
+
+  <text x="80"  y="234" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">50</text>
+  <text x="168" y="234" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">100</text>
+  <text x="256" y="234" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">200</text>
+  <text x="344" y="234" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">400</text>
+  <text x="432" y="234" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">600 · Primary</text>
+  <text x="520" y="234" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">800</text>
+  <text x="608" y="234" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">900</text>
+
+  <text x="40" y="255" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#4F3FCC">Ink Violet</text>
+
+  <!-- Amber Gold swatches -->
+  <rect x="40"  y="268" width="80" height="72" rx="8" fill="#FDF5E4"/>
+  <rect x="128" y="268" width="80" height="72" rx="8" fill="#FCDFA0"/>
+  <rect x="216" y="268" width="80" height="72" rx="8" fill="#F8C352"/>
+  <rect x="304" y="268" width="80" height="72" rx="8" fill="#E8960F"/>
+  <rect x="392" y="268" width="80" height="72" rx="8" fill="#B5700A"/>
+  <rect x="480" y="268" width="80" height="72" rx="8" fill="#7A4A06"/>
+  <rect x="568" y="268" width="80" height="72" rx="8" fill="#3D2200"/>
+
+  <text x="80"  y="360" font-family="system-ui,sans-serif" font-size="8.5" font-weight="500" fill="#7A4A06" text-anchor="middle">#FDF5E4</text>
+  <text x="168" y="360" font-family="system-ui,sans-serif" font-size="8.5" font-weight="500" fill="#7A4A06" text-anchor="middle">#FCDFA0</text>
+  <text x="256" y="360" font-family="system-ui,sans-serif" font-size="8.5" font-weight="500" fill="#7A4A06" text-anchor="middle">#F8C352</text>
+  <text x="344" y="360" font-family="system-ui,sans-serif" font-size="8.5" font-weight="500" fill="#FDF5E4" text-anchor="middle">#E8960F</text>
+  <text x="432" y="360" font-family="system-ui,sans-serif" font-size="8.5" font-weight="500" fill="#FCDFA0" text-anchor="middle">#B5700A</text>
+  <text x="520" y="360" font-family="system-ui,sans-serif" font-size="8.5" font-weight="500" fill="#F8C352" text-anchor="middle">#7A4A06</text>
+  <text x="608" y="360" font-family="system-ui,sans-serif" font-size="8.5" font-weight="500" fill="#E8960F" text-anchor="middle">#3D2200</text>
+
+  <text x="80"  y="372" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">50</text>
+  <text x="168" y="372" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">100</text>
+  <text x="256" y="372" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">200</text>
+  <text x="344" y="372" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">400 · Accent</text>
+  <text x="432" y="372" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">600</text>
+  <text x="520" y="372" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">800</text>
+  <text x="608" y="372" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">900</text>
+
+  <text x="40" y="393" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#E8960F">Amber Gold</text>
+
+  <line x1="40" y1="408" x2="760" y2="408" stroke="#E8E8E5" stroke-width="0.75"/>
+
+  <!-- Section: Neutrals -->
+  <text x="40" y="430" font-family="system-ui,sans-serif" font-size="9" font-weight="600" letter-spacing="2.5" fill="#8F8CAF">NEUTRALS &amp; SEMANTICS</text>
+
+  <!-- Neutral dark row -->
+  <rect x="40"  y="442" width="70" height="44" rx="6" fill="#F7F7FA" stroke="#E8E8E5" stroke-width="0.5"/>
+  <rect x="118" y="442" width="70" height="44" rx="6" fill="#E4E3F0"/>
+  <rect x="196" y="442" width="70" height="44" rx="6" fill="#8F8CAF"/>
+  <rect x="274" y="442" width="70" height="44" rx="6" fill="#555275"/>
+  <rect x="352" y="442" width="70" height="44" rx="6" fill="#2A2748"/>
+  <rect x="430" y="442" width="70" height="44" rx="6" fill="#131128"/>
+
+  <text x="75"  y="498" font-family="system-ui,sans-serif" font-size="8" fill="#555275" text-anchor="middle">#F7F7FA</text>
+  <text x="153" y="498" font-family="system-ui,sans-serif" font-size="8" fill="#555275" text-anchor="middle">#E4E3F0</text>
+  <text x="231" y="498" font-family="system-ui,sans-serif" font-size="8" fill="#555275" text-anchor="middle">#8F8CAF</text>
+  <text x="309" y="498" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">#555275</text>
+  <text x="387" y="498" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">#2A2748</text>
+  <text x="465" y="498" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">#131128</text>
+
+  <!-- Semantic row -->
+  <rect x="520" y="442" width="56" height="44" rx="6" fill="#16A660"/>
+  <rect x="584" y="442" width="56" height="44" rx="6" fill="#E8960F"/>
+  <rect x="648" y="442" width="56" height="44" rx="6" fill="#D93E3E"/>
+  <rect x="704" y="442" width="56" height="44" rx="6" fill="#4F3FCC"/>
+
+  <text x="548" y="498" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">Success</text>
+  <text x="612" y="498" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">Warning</text>
+  <text x="676" y="498" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">Error</text>
+  <text x="732" y="498" font-family="system-ui,sans-serif" font-size="8" fill="#8F8CAF" text-anchor="middle">Info</text>
+
+  <line x1="40" y1="514" x2="760" y2="514" stroke="#E8E8E5" stroke-width="0.75"/>
+
+  <!-- Logo preview strip -->
+  <text x="40" y="536" font-family="system-ui,sans-serif" font-size="9" font-weight="600" letter-spacing="2.5" fill="#8F8CAF">LOGO MARK</text>
+
+  <!-- Icon circle -->
+  <circle cx="76" cy="580" r="28" fill="#4F3FCC"/>
+  <path d="M64 571L76 591L88 571" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="76" cy="571" r="4" fill="#E8960F"/>
+
+  <!-- Icon rounded square -->
+  <rect x="120" y="552" width="56" height="56" rx="12" fill="#4F3FCC"/>
+  <path d="M134 571L148 591L162 571" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="148" cy="571" r="4" fill="#E8960F"/>
+
+  <!-- Wordmark primary -->
+  <text x="196" y="585" font-family="system-ui,sans-serif" font-size="32" font-weight="800" letter-spacing="-1" fill="#141414">wyt</text>
+  <text x="264" y="585" font-family="system-ui,sans-serif" font-size="32" font-weight="300" letter-spacing="-1" fill="#2A2748">nest</text>
+
+  <!-- Dark swatch with logo -->
+  <rect x="390" y="550" width="180" height="60" rx="10" fill="#131128"/>
+  <circle cx="420" cy="580" r="18" fill="#7B6EF5"/>
+  <path d="M412 574L420 587L428 574" stroke="#131128" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="420" cy="574" r="3" fill="#E8960F"/>
+  <text x="447" y="587" font-family="system-ui,sans-serif" font-size="24" font-weight="800" letter-spacing="-1" fill="#F7F7FA">wyt</text>
+  <text x="490" y="587" font-family="system-ui,sans-serif" font-size="24" font-weight="300" letter-spacing="-1" fill="#C8C6E0">nest</text>
+
+  <!-- Footer -->
+  <text x="760" y="630" font-family="system-ui,sans-serif" font-size="9" fill="#D0D0CC" text-anchor="end">wytnest.com · Built by CyberSage</text>
+</svg>

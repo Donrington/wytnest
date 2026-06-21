@@ -1,0 +1,193 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: 'Geist', system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-quote: 'Fraunces', Georgia, serif;
+  --font-mono: 'Geist Mono', monospace;
+
+  --ink-600: #4F3FCC;
+  --ink-400: #7B6EF5;
+  --ink-200: #B0A8FC;
+  --gold-400: #E8960F;
+  --gold-200: #F8C352;
+  --night: #0A0917;
+  --panel: #131128;
+  --paper: #FAFAF8;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--night);
+  color: #B8B5D4;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+::selection { background: var(--gold-400); color: #0A0917; }
+
+/* Scrollbar — tuned for the night canvas */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: var(--night); }
+::-webkit-scrollbar-thumb {
+  background: #2A2748;
+  border-radius: 5px;
+  border: 2px solid var(--night);
+}
+::-webkit-scrollbar-thumb:hover { background: #3E3B61; }
+
+@layer components {
+  /* Film grain — fixed overlay for tactile depth */
+  .grain::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Glass — light (on paper sections) */
+  .glass {
+    background: rgba(255, 255, 255, 0.66);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+  }
+  /* Glass — night (the default surface on dark canvas) */
+  .glass-dark {
+    background: rgba(30, 26, 66, 0.45);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid rgba(176, 168, 252, 0.1);
+  }
+
+  /* witness-card — base structure only; visual styling is per-card inline (accent-aware) */
+  .witness-card { border-radius: 1.15rem; }
+
+  /* Gradient text — reserved for the single hero accent word */
+  .text-gradient {
+    background: linear-gradient(100deg, #B0A8FC 0%, #7B6EF5 45%, #E8960F 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .text-foil {
+    background: linear-gradient(100deg, #F8C352 0%, #E8960F 55%, #B5700A 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Hand-drawn gold underline stroke under the accent word */
+  .foil-underline {
+    position: relative;
+    display: inline-block;
+  }
+  .foil-underline svg {
+    position: absolute;
+    left: -2%;
+    bottom: -0.22em;
+    width: 104%;
+    height: 0.4em;
+    overflow: visible;
+  }
+  .foil-underline path {
+    stroke: url(#foilStroke);
+    stroke-width: 5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    pathLength: 1;
+  }
+
+  /* Quote — testimony set on the record */
+  .testimony {
+    font-family: var(--font-quote);
+    font-optical-sizing: auto;
+    letter-spacing: -0.01em;
+  }
+
+  /* Mono eyebrow / data label */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  /* Magnetic button */
+  .btn-magnetic {
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-magnetic::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, rgba(255,255,255,0.18), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .btn-magnetic:hover::after { opacity: 1; }
+
+  /* Animated underline link */
+  .link-underline { position: relative; }
+  .link-underline::after {
+    content: '';
+    position: absolute;
+    left: 0; bottom: -2px;
+    width: 0; height: 1px;
+    background: currentColor;
+    transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .link-underline:hover::after { width: 100%; }
+
+  /* Edge masks */
+  .mask-fade-x {
+    mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  }
+  .mask-fade-y {
+    mask-image: linear-gradient(to bottom, transparent, black 14%, black 86%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 14%, black 86%, transparent);
+  }
+
+  /* Witness wall column — align-self: start keeps rendered height = content height */
+  .witness-col { display: flex; flex-direction: column; gap: 1rem; align-self: start; }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .perspective { perspective: 1200px; }
+}
+
+/* Clip-reveal — GSAP / scroll targets */
+.reveal { opacity: 0; transform: translateY(28px); }
+.clip-reveal {
+  clip-path: inset(0 0 100% 0);
+  transform: translateY(0.4em);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+  .clip-reveal { clip-path: none; transform: none; }
+  [class*="animate-drift"], [class*="animate-marquee"] { animation: none !important; }
+}
