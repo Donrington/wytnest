@@ -536,7 +536,7 @@ function OverviewContent({ T }: { T: Theme }) {
                   >
                     {r.status}
                   </span>
-                  <span className="text-[0.64rem]" style={{ color: T.muted }}>{r.time}</span>
+                  <span className="hidden text-[0.64rem] sm:block" style={{ color: T.muted }}>{r.time}</span>
                 </div>
               </div>
             )
@@ -639,7 +639,7 @@ const CAMPAIGNS_DATA = [
 function CampaignsContent({ T }: { T: Theme }) {
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-[1.55rem] font-bold tracking-tight" style={{ color: T.heading, transition: 'color 0.3s' }}>
             Campaigns
@@ -760,7 +760,7 @@ function TestimonialsContent({ T }: { T: Theme }) {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 rounded-xl p-1" style={{ background: T.tableRowBorder, transition: 'background 0.3s' }}>
+      <div className="flex gap-1 overflow-x-auto rounded-xl p-1" style={{ background: T.tableRowBorder, transition: 'background 0.3s' }}>
         {tabs.map(tab => {
           const isActive = filter === tab.id
           return (
@@ -955,7 +955,7 @@ function WidgetsContent({ T }: { T: Theme }) {
                   </div>
                 </div>
 
-                <div className="flex shrink-0 gap-2 sm:flex-col sm:items-end">
+                <div className="flex shrink-0 flex-row gap-2 sm:flex-col sm:items-end">
                   <button className="rounded-lg px-3 py-1.5 text-[0.72rem] font-medium transition-opacity hover:opacity-70"
                           style={{ background: 'rgba(123,110,245,0.1)', color: '#7B6EF5' }}>
                     Configure
@@ -1103,7 +1103,8 @@ function AnalyticsContent({ T }: { T: Theme }) {
         <div className="px-5 py-4" style={{ borderBottom: `1px solid ${T.tableRowBorder}` }}>
           <p className="text-[0.82rem] font-semibold" style={{ color: T.heading }}>Top performing testimonials</p>
         </div>
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[420px]">
           <thead>
             <tr style={{ borderBottom: `1px solid ${T.tableRowBorder}` }}>
               {['Testimonial', 'Widget', 'Views', 'CTR'].map(h => (
@@ -1145,6 +1146,7 @@ function AnalyticsContent({ T }: { T: Theme }) {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )
@@ -1423,7 +1425,7 @@ function SettingsContent({ T }: { T: Theme }) {
           { label: 'Weekly digest',                 sub: 'Summary of views, clicks, and conversions',     on: true  },
           { label: 'Product updates',               sub: 'New features, tips, and changelog',             on: false },
         ].map((n, i) => (
-          <div key={i} className="flex items-center justify-between gap-4">
+          <div key={i} className="flex items-start justify-between gap-4 sm:items-center">
             <div>
               <p className="text-[0.8rem] font-medium" style={{ color: T.heading }}>{n.label}</p>
               <p className="text-[0.7rem]" style={{ color: T.body }}>{n.sub}</p>
@@ -1491,6 +1493,7 @@ export function DashboardShell({
   active?: string
 }) {
   const [collapsed,  setCollapsed]  = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const [notifOpen,  setNotifOpen]  = useState(false)
   const [isDark,     setIsDark]     = useState(true)
   const notifRef = useRef<HTMLDivElement>(null)
@@ -1531,11 +1534,11 @@ export function DashboardShell({
       style={{ background: T.rootBg, transition: 'background 0.3s' }}
     >
 
-      {/* ── Sidebar ── */}
+      {/* ── Sidebar (desktop only) ── */}
       <motion.aside
         animate={{ width: collapsed ? 72 : 240 }}
         transition={{ type: 'spring', bounce: 0.1, duration: 0.42 }}
-        className="relative flex flex-col overflow-hidden"
+        className="relative hidden flex-col overflow-hidden lg:flex"
         style={{
           minWidth:    collapsed ? 72 : 240,
           maxWidth:    collapsed ? 72 : 240,
@@ -1742,12 +1745,124 @@ export function DashboardShell({
         </div>
       </motion.aside>
 
+      {/* ── Mobile sidebar drawer ── */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              className="fixed inset-0 z-40 lg:hidden"
+              style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setMobileOpen(false)}
+            />
+            {/* Drawer panel */}
+            <motion.aside
+              className="fixed inset-y-0 left-0 z-50 flex w-[268px] flex-col overflow-hidden lg:hidden"
+              style={{ background: T.sidebarBg, borderRight: `1px solid ${T.sidebarBorder}`, transition: 'background 0.3s' }}
+              initial={{ x: -268 }} animate={{ x: 0 }} exit={{ x: -268 }}
+              transition={{ type: 'spring', bounce: 0.06, duration: 0.38 }}
+            >
+              {/* Ambient glow */}
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-40"
+                   style={{ background: T.ambientGlow }} aria-hidden="true" />
+
+              {/* Logo row */}
+              <div className="relative flex h-16 shrink-0 items-center gap-2.5 px-4"
+                   style={{ borderBottom: `1px solid ${T.sidebarBorder}` }}>
+                <a href="/" className="flex min-w-0 items-center gap-2.5">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
+                        style={{ background: 'linear-gradient(135deg, #4F3FCC, #7B6EF5)', boxShadow: '0 0 0 1px rgba(123,110,245,0.28), 0 0 18px -4px rgba(79,63,204,0.55)' }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                      <path d="M6 7L12 17L18 7" stroke="#fff" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="12" cy="7" r="2" fill="#E8960F" />
+                    </svg>
+                  </span>
+                  <span className="whitespace-nowrap text-[0.95rem] font-extrabold tracking-tight"
+                        style={{ color: T.logoWordmark }}>
+                    wyt<span style={{ fontWeight: 300, color: T.logoSub }}>nest</span>
+                  </span>
+                </a>
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  aria-label="Close menu"
+                  className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors"
+                  style={{ color: T.collapseBtnColor }}
+                  onMouseEnter={e => (e.currentTarget.style.background = T.collapseBtnHoverBg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                    <path d="M6 6l12 12M18 6L6 18" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Nav — clicks close the drawer */}
+              <div className="relative flex flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden px-3 py-4"
+                   onClick={() => setMobileOpen(false)}>
+                <SectionLabel label="Main" collapsed={false} T={T} />
+                {NAV_MAIN.map(item => (
+                  <NavItem key={item.id} item={item} active={active} collapsed={false} T={T} />
+                ))}
+                <div className="my-3 h-px" style={{ background: T.divider }} />
+                <SectionLabel label="Manage" collapsed={false} T={T} />
+                {NAV_MANAGE.map(item => (
+                  <NavItem key={item.id} item={item} active={active} collapsed={false} T={T} />
+                ))}
+                <div className="my-3 h-px" style={{ background: T.divider }} />
+                <a href="/dashboard/help"
+                   className="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[0.82rem] font-medium"
+                   style={{ color: T.navInactiveText }}>
+                  <span className="absolute inset-0 rounded-xl opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+                        style={{ background: T.navHoverBg }} aria-hidden="true" />
+                  <span className="relative z-10" style={{ color: T.navIconInactive }}><Ico id="help" /></span>
+                  <span className="relative z-10">Help & Support</span>
+                </a>
+              </div>
+
+              {/* User section */}
+              <div className="shrink-0 px-3 pb-4 pt-3"
+                   style={{ borderTop: `1px solid ${T.sidebarBorder}` }}>
+                <a href="/dashboard/billing"
+                   className="mb-3 flex items-center justify-between rounded-xl px-3 py-2.5"
+                   style={{ background: T.upgradeBg, border: `1px solid ${T.upgradeBorder}`, transition: 'background 0.3s' }}>
+                  <div>
+                    <p className="text-[0.72rem] font-bold" style={{ color: T.upgradePlan }}>Starter Plan</p>
+                    <p className="text-[0.62rem]" style={{ color: T.upgradeSub }}>Upgrade for more</p>
+                  </div>
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg"
+                        style={{ background: T.upgradeIconBg }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                            fill="#E8960F" stroke="#E8960F" strokeWidth="0.5" strokeLinejoin="round"/>
+                    </svg>
+                  </span>
+                </a>
+                <div className="flex items-center gap-3 rounded-xl px-3 py-2">
+                  <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[0.7rem] font-bold tracking-wide text-white"
+                       style={{ background: 'linear-gradient(135deg, #4F3FCC, #7B6EF5)' }}>
+                    SA
+                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400"
+                          style={{ border: `2px solid ${T.avatarRing}` }} title="Online" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[0.8rem] font-semibold" style={{ color: T.userName }}>Sage</p>
+                    <p className="truncate text-[0.66rem]" style={{ color: T.userEmail }}>kicsworldwide@gmail.com</p>
+                  </div>
+                </div>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* ── Main area ── */}
       <div className="flex min-w-0 flex-1 flex-col">
 
         {/* ── Topbar ── */}
         <header
-          className="relative z-30 flex h-16 shrink-0 items-center justify-between gap-4 px-5"
+          className="relative z-30 flex h-16 shrink-0 items-center justify-between gap-3 px-3 sm:px-5"
           style={{
             borderBottom:         `1px solid ${T.topbarBorder}`,
             background:            T.topbarBg,
@@ -1756,10 +1871,16 @@ export function DashboardShell({
             transition:           'background 0.3s, border-color 0.3s',
           }}
         >
-          {/* Left: sidebar toggle + breadcrumb */}
+          {/* Left: sidebar toggle + mobile logo + breadcrumb */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setCollapsed(v => !v)}
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                  setMobileOpen(v => !v)
+                } else {
+                  setCollapsed(v => !v)
+                }
+              }}
               aria-label="Toggle sidebar"
               className="flex h-9 w-9 items-center justify-center rounded-xl transition-colors"
               style={{ color: T.menuBtnColor }}
@@ -1771,7 +1892,22 @@ export function DashboardShell({
               </svg>
             </button>
 
-            <div className="hidden items-center gap-2 sm:flex">
+            {/* Mobile logo — visible only when sidebar is hidden */}
+            <a href="/" className="flex items-center gap-2 lg:hidden">
+              <span className="flex h-7 w-7 items-center justify-center rounded-xl"
+                    style={{ background: 'linear-gradient(135deg, #4F3FCC, #7B6EF5)' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <path d="M6 7L12 17L18 7" stroke="#fff" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="12" cy="7" r="2" fill="#E8960F" />
+                </svg>
+              </span>
+              <span className="hidden text-[0.88rem] font-extrabold tracking-tight sm:block"
+                    style={{ color: T.logoWordmark }}>
+                wyt<span style={{ fontWeight: 300, color: T.logoSub }}>nest</span>
+              </span>
+            </a>
+
+            <div className="hidden items-center gap-2 lg:flex">
               <span className="text-[0.7rem]" style={{ color: T.breadcrumbParent }}>Dashboard</span>
               <span className="text-[0.6rem]" style={{ color: T.breadcrumbSep }}>/</span>
               <span className="text-[0.8rem] font-medium" style={{ color: T.breadcrumbCurrent }}>{pageTitle}</span>
@@ -1936,7 +2072,7 @@ export function DashboardShell({
           className="flex-1 overflow-auto"
           style={{ background: T.contentBg, transition: 'background 0.3s' }}
         >
-          <div className="p-6 lg:p-8">
+          <div className="p-4 sm:p-6 lg:p-8">
             {active === 'overview'      ? <OverviewContent      T={T} /> :
              active === 'campaigns'    ? <CampaignsContent    T={T} /> :
              active === 'testimonials' ? <TestimonialsContent T={T} /> :
