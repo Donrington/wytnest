@@ -3,6 +3,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { useWorkspace } from '@/lib/hooks/useWorkspace'
+import { CreateCampaignModal } from '@/components/dashboard/CreateCampaignModal'
+import { createClient } from '@/lib/supabase/client'
+import { PLAN_LIMITS } from '@/lib/types/database'
+import type { Campaign } from '@/lib/types/database'
 
 const E_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
@@ -627,102 +632,188 @@ function OverviewContent({ T }: { T: Theme }) {
 }
 
 // ── Campaigns page ───────────────────────────────────────────────────────────
-const CAMPAIGNS_DATA = [
-  { name: 'Q4 Reviews',      desc: 'End of year customer satisfaction',   status: 'active',    collected: 18, goal: 25, created: 'Nov 12, 2025', pending: 5 },
-  { name: 'Product Launch',  desc: 'New feature testimonials for v2.0',    status: 'active',    collected: 7,  goal: 10, created: 'Dec 2, 2025',  pending: 0 },
-  { name: 'Onboarding Flow', desc: 'First-week experience reviews',         status: 'active',    collected: 24, goal: 30, created: 'Oct 28, 2025', pending: 3 },
-  { name: 'Summer Campaign', desc: 'Seasonal promotional testimonials',     status: 'draft',     collected: 0,  goal: 15, created: 'Jun 1, 2025',  pending: 0 },
-  { name: 'Agency Partners', desc: 'Partner network social proof',          status: 'completed', collected: 20, goal: 20, created: 'Sep 15, 2025', pending: 0 },
-  { name: 'Beta Testers',    desc: 'Early access user feedback',            status: 'completed', collected: 12, goal: 12, created: 'Aug 5, 2025',  pending: 0 },
-]
-
 function CampaignsContent({ T }: { T: Theme }) {
+  const { workspace, loading: wsLoading } = useWorkspace()
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showCreate, setShowCreate] = useState(false)
+  const isDark = T.rootBg === '#080716'
+
+  const plan = workspace?.plan ?? 'free'
+  const campaignLimit = PLAN_LIMITS[plan].campaigns
+  const atLimit = campaignLimit !== null && campaigns.length >= campaignLimit
+
+  useEffect(() => {
+    if (!workspace) return
+    const supabase = createClient()
+    supabase
+      .from('campaigns')
+      .select('*')
+      .eq('workspace_id', workspace.id)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        setCampaigns((data as Campaign[]) ?? [])
+        setLoading(false)
+      })
+  }, [workspace])
+
+  const handleCreated = (c: Campaign) => setCampaigns(prev => [c, ...prev])
+
+  const statusStyle = (status: string) =>
+    status === 'active'   ? { bg: T.tagSuccessBg, text: T.tagSuccessText } :
+    status === 'paused'   ? { bg: T.tagPendingBg,  text: T.tagPendingText  } :
+    status === 'archived' ? { bg: 'rgba(255,255,255,0.06)', text: '#6F6C92' } :
+                            { bg: T.tagPendingBg,  text: T.tagPendingText  }
+
   return (
     <div className="flex flex-col gap-6">
+      {showCreate && workspace && (
+        <CreateCampaignModal
+          workspaceId={workspace.id}
+          plan={plan}
+          isDark={isDark}
+          onCreated={handleCreated}
+          onClose={() => setShowCreate(false)}
+        />
+      )}
+
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-[1.55rem] font-bold tracking-tight" style={{ color: T.heading, transition: 'color 0.3s' }}>
             Campaigns
           </h1>
           <p className="mt-1 text-[0.82rem]" style={{ color: T.body, transition: 'color 0.3s' }}>
-            {CAMPAIGNS_DATA.length} campaigns · Manage testimonial collection flows.
+            {loading ? 'Loading…' : `${campaigns.length} campaign${campaigns.length !== 1 ? 's' : ''} · Manage testimonial collection flows.`}
           </p>
         </div>
-        <motion.a
-          href="/dashboard/campaigns/new"
-          className="flex h-9 items-center gap-2 rounded-xl px-4 text-[0.8rem] font-semibold"
+        <motion.button
+          onClick={() => !atLimit && setShowCreate(true)}
+          disabled={atLimit || wsLoading}
+          className="flex h-9 items-center gap-2 rounded-xl px-4 text-[0.8rem] font-semibold disabled:opacity-50"
           style={{ background: 'linear-gradient(135deg, #F8C352, #E8960F)', color: '#080716', willChange: 'transform' }}
-          whileHover={{ scale: 1.04, transition: { duration: 0.18 } }}
-          whileTap={{ scale: 0.96, transition: { duration: 0.1 } }}
+          whileHover={{ scale: atLimit ? 1 : 1.04, transition: { duration: 0.18 } }}
+          whileTap={{ scale: atLimit ? 1 : 0.96 }}
+          title={atLimit ? `Campaign limit reached on ${plan} plan` : 'Create new campaign'}
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
             <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"/>
           </svg>
           New campaign
-        </motion.a>
+        </motion.button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {CAMPAIGNS_DATA.map((c, i) => {
-          const pct = c.goal > 0 ? Math.round((c.collected / c.goal) * 100) : 0
-          const statusStyle =
-            c.status === 'active'    ? { bg: T.tagSuccessBg, text: T.tagSuccessText } :
-            c.status === 'completed' ? { bg: 'rgba(123,110,245,0.12)', text: '#7B6EF5' } :
-                                       { bg: T.tagPendingBg,  text: T.tagPendingText  }
-          return (
-            <motion.div
-              key={i}
-              className="flex flex-col gap-4 rounded-2xl p-5"
-              style={{
-                background: T.card, borderWidth: '1px', borderStyle: 'solid',
-                borderColor: T.cardBorder, boxShadow: T.cardShadow,
-                transition: 'background 0.3s, border-color 0.3s', willChange: 'transform',
-              }}
-              whileHover={{ y: -2, transition: { duration: 0.2 } }}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[0.88rem] font-semibold" style={{ color: T.heading }}>{c.name}</p>
-                  <p className="mt-0.5 text-[0.72rem] leading-relaxed" style={{ color: T.body }}>{c.desc}</p>
-                </div>
-                <span className="shrink-0 rounded-full px-2 py-0.5 text-[0.6rem] font-semibold capitalize"
-                      style={{ background: statusStyle.bg, color: statusStyle.text }}>
-                  {c.status}
-                </span>
-              </div>
+      {/* Plan limit banner */}
+      {atLimit && (
+        <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-[0.78rem]"
+          style={{ background: 'rgba(232,150,15,0.08)', border: '1px solid rgba(232,150,15,0.2)', color: '#E8960F' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          You&apos;ve reached the {campaignLimit}-campaign limit on the {plan} plan.{' '}
+          <a href="/dashboard/settings" className="font-semibold underline">Upgrade to add more</a>
+        </div>
+      )}
 
-              <div>
-                <div className="mb-1.5 flex items-center justify-between">
-                  <span className="text-[0.68rem]" style={{ color: T.muted }}>Collected</span>
-                  <span className="text-[0.68rem] font-medium" style={{ color: T.subheading }}>{c.collected} / {c.goal}</span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full" style={{ background: T.tableRowBorder, transition: 'background 0.3s' }}>
-                  <motion.div
-                    className="h-full rounded-full"
-                    style={{ background: c.status === 'completed' ? '#7B6EF5' : 'linear-gradient(90deg, #F8C352, #E8960F)' }}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${pct}%` }}
-                    transition={{ duration: 0.85, delay: i * 0.07, ease: E_OUT }}
-                  />
-                </div>
-              </div>
+      {/* Loading skeleton */}
+      {(loading || wsLoading) && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-44 animate-pulse rounded-2xl"
+              style={{ background: T.card, border: `1px solid ${T.cardBorder}` }} />
+          ))}
+        </div>
+      )}
 
-              <div className="flex items-center justify-between">
-                <span className="text-[0.65rem]" style={{ color: T.muted }}>{c.created}</span>
-                <div className="flex items-center gap-2">
-                  {c.pending > 0 && (
-                    <span className="rounded-full px-2 py-0.5 text-[0.6rem] font-semibold"
-                          style={{ background: T.tagPendingBg, color: T.tagPendingText }}>
-                      {c.pending} pending
+      {/* Empty state */}
+      {!loading && !wsLoading && campaigns.length === 0 && (
+        <motion.div
+          className="flex flex-col items-center justify-center rounded-2xl py-16 text-center"
+          style={{ background: T.card, border: `1px dashed ${T.cardBorder}` }}
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
+            style={{ background: 'rgba(123,110,245,0.1)', border: '1px solid rgba(123,110,245,0.15)' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7B6EF5" strokeWidth="1.8" strokeLinecap="round">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.52 9.93 19.79 19.79 0 01.46 1.27 2 2 0 012.44.09h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.49a16 16 0 006.29 6.29l.77-.77a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 15.09z"/>
+            </svg>
+          </div>
+          <p className="text-[0.92rem] font-semibold" style={{ color: T.heading }}>No campaigns yet</p>
+          <p className="mt-1 max-w-xs text-[0.78rem]" style={{ color: T.muted }}>
+            Create your first campaign to start collecting testimonials via magic links.
+          </p>
+          <motion.button
+            onClick={() => setShowCreate(true)}
+            className="mt-5 flex h-9 items-center gap-2 rounded-xl px-5 text-[0.82rem] font-semibold"
+            style={{ background: 'linear-gradient(135deg, #F8C352, #E8960F)', color: '#080716' }}
+            whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"/>
+            </svg>
+            Create campaign
+          </motion.button>
+        </motion.div>
+      )}
+
+      {/* Campaign cards */}
+      {!loading && campaigns.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {campaigns.map((c, i) => {
+            const s = statusStyle(c.status)
+            const createdDate = new Date(c.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+            const link = `${typeof window !== 'undefined' ? window.location.origin : ''}/submit/${c.slug}`
+            return (
+              <motion.div
+                key={c.id}
+                className="flex flex-col gap-4 rounded-2xl p-5"
+                style={{
+                  background: T.card, borderWidth: '1px', borderStyle: 'solid',
+                  borderColor: T.cardBorder, boxShadow: T.cardShadow,
+                  transition: 'background 0.3s, border-color 0.3s', willChange: 'transform',
+                }}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: i * 0.06, ease: E_OUT }}
+                whileHover={{ y: -2, transition: { duration: 0.2 } }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[0.88rem] font-semibold" style={{ color: T.heading }}>{c.name}</p>
+                    <p className="mt-0.5 truncate text-[0.7rem]" style={{ color: T.muted }}>/{c.slug}</p>
+                  </div>
+                  <span className="shrink-0 rounded-full px-2 py-0.5 text-[0.6rem] font-semibold capitalize"
+                        style={{ background: s.bg, color: s.text }}>
+                    {c.status}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 overflow-hidden rounded-lg px-3 py-2"
+                  style={{ background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)', border: `1px solid ${T.cardBorder}` }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7B6EF5" strokeWidth="2" strokeLinecap="round">
+                    <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+                  </svg>
+                  <span className="flex-1 truncate text-[0.65rem]" style={{ color: T.muted }}>{link}</span>
+                  <button onClick={() => navigator.clipboard.writeText(link)}
+                    className="shrink-0 text-[0.62rem] font-medium transition-opacity hover:opacity-70"
+                    style={{ color: '#7B6EF5' }}>
+                    Copy
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-[0.65rem]" style={{ color: T.muted }}>{createdDate}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1 text-[0.65rem]" style={{ color: T.muted }}>
+                      {c.allow_video && c.allow_text ? 'Video + Text' : c.allow_video ? 'Video' : 'Text'}
                     </span>
-                  )}
-                  <a href="#" className="text-[0.7rem] font-medium" style={{ color: '#7B6EF5' }}>Edit →</a>
+                    <a href={`/dashboard/campaigns/${c.id}`} className="text-[0.7rem] font-medium" style={{ color: '#7B6EF5' }}>
+                      Manage →
+                    </a>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          )
-        })}
-      </div>
+              </motion.div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -1693,10 +1784,10 @@ export function DashboardShell({
               >
                 <div className="min-w-0">
                   <p className="text-[0.72rem] font-semibold" style={{ color: T.upgradePlan }}>
-                    Growth plan
+                    Free plan
                   </p>
                   <p className="text-[0.64rem]" style={{ color: T.upgradeSub }}>
-                    Upgrade to Agency →
+                    Upgrade to Starter →
                   </p>
                 </div>
                 <span
@@ -1828,7 +1919,7 @@ export function DashboardShell({
                    className="mb-3 flex items-center justify-between rounded-xl px-3 py-2.5"
                    style={{ background: T.upgradeBg, border: `1px solid ${T.upgradeBorder}`, transition: 'background 0.3s' }}>
                   <div>
-                    <p className="text-[0.72rem] font-bold" style={{ color: T.upgradePlan }}>Starter Plan</p>
+                    <p className="text-[0.72rem] font-bold" style={{ color: T.upgradePlan }}>Free Plan</p>
                     <p className="text-[0.62rem]" style={{ color: T.upgradeSub }}>Upgrade for more</p>
                   </div>
                   <span className="flex h-7 w-7 items-center justify-center rounded-lg"

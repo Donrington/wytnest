@@ -8,22 +8,41 @@ const E_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
 const PLANS = [
   {
+    id: 'free',
+    name: 'Free',
+    tagline: 'Taste the product, no card needed',
+    ngn: { monthly: 'Free', annual: 'Free' },
+    usd: { monthly: 'Free', annual: 'Free' },
+    features: [
+      { text: '5 text testimonials', included: true },
+      { text: '1 embed widget', included: true },
+      { text: '1 active campaign', included: true },
+      { text: 'Bento wall layout', included: true },
+      { text: 'Video testimonials', included: false },
+      { text: 'White-label (no badge)', included: false },
+      { text: 'Analytics dashboard', included: false },
+    ],
+    cta: 'Get started free',
+    href: '/signup',
+    featured: false,
+  },
+  {
     id: 'starter',
     name: 'Starter',
-    tagline: 'For solo founders testing the waters',
+    tagline: 'For solo founders scaling their proof',
     ngn: { monthly: '₦15,000', annual: '₦144,000' },
     usd: { monthly: '$9', annual: '$86' },
     features: [
-      { text: '50 testimonials / month', included: true },
+      { text: '50 testimonials', included: true },
       { text: '2 embed widgets', included: true },
-      { text: 'Text testimonials', included: true },
-      { text: 'Bento wall layout', included: true },
-      { text: 'Wytnest badge', included: true },
+      { text: '5 campaigns', included: true },
+      { text: 'All 3 widget layouts', included: true },
       { text: 'Video testimonials', included: false },
       { text: 'White-label (no badge)', included: false },
+      { text: 'Analytics dashboard', included: false },
     ],
-    cta: 'Start free',
-    href: '/dashboard',
+    cta: 'Start with Starter',
+    href: '/signup',
     featured: false,
   },
   {
@@ -34,15 +53,15 @@ const PLANS = [
     usd: { monthly: '$29', annual: '$278' },
     features: [
       { text: 'Unlimited testimonials', included: true },
-      { text: 'All 3 widget types', included: true },
-      { text: 'Video + text', included: true },
-      { text: 'Custom domain embed', included: true },
+      { text: '10 widgets + all layouts', included: true },
+      { text: 'Video + text testimonials', included: true },
       { text: 'White-label (no badge)', included: true },
       { text: 'Analytics dashboard', included: true },
+      { text: 'Custom domain embed', included: true },
       { text: 'Priority support', included: false },
     ],
-    cta: 'Start free',
-    href: '/dashboard',
+    cta: 'Start with Growth',
+    href: '/signup',
     featured: true,
   },
   {
@@ -55,25 +74,26 @@ const PLANS = [
       { text: '10 client workspaces', included: true },
       { text: 'Everything in Growth', included: true },
       { text: 'Client sub-accounts', included: true },
-      { text: 'Priority support', included: true },
-      { text: 'REST API access', included: true },
       { text: 'Custom widget CSS', included: true },
-      { text: 'White-label (no badge)', included: true },
+      { text: 'REST API access', included: true },
+      { text: 'Priority support', included: true },
+      { text: 'White-label everywhere', included: true },
     ],
     cta: 'Talk to sales',
-    href: '/dashboard',
+    href: '/signup',
     featured: false,
   },
 ] as const
 
 // ── Animated price number ────────────────────────────────────────────────────
 function Price({ value, period, valueClass = 'text-carbon-50' }: { value: string; period: string; valueClass?: string }) {
+  const isFree = value === 'Free'
   return (
     <div className="flex items-baseline gap-1.5">
       <AnimatePresence mode="wait">
         <motion.span
           key={value}
-          className={cn('font-display text-[2.8rem] font-extrabold leading-none tracking-[-0.04em]', valueClass)}
+          className={cn('font-display font-extrabold leading-none tracking-[-0.04em]', valueClass, isFree ? 'text-[2.2rem]' : 'text-[2.8rem]')}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
@@ -82,7 +102,8 @@ function Price({ value, period, valueClass = 'text-carbon-50' }: { value: string
           {value}
         </motion.span>
       </AnimatePresence>
-      <span className="text-[0.8rem] text-carbon-600">/{period}</span>
+      {!isFree && <span className="text-[0.8rem] text-carbon-600">/{period}</span>}
+      {isFree && <span className="text-[0.8rem] text-carbon-600">forever</span>}
     </div>
   )
 }
@@ -586,7 +607,7 @@ export function Pricing() {
         </div>
 
         {/* Cards */}
-        <div className="mt-16 grid gap-5 lg:grid-cols-3 lg:items-start">
+        <div className="mt-16 grid gap-5 lg:grid-cols-4 lg:items-start">
           {PLANS.map((plan, idx) => (
             <PricingCard
               key={plan.id}
@@ -606,7 +627,7 @@ export function Pricing() {
           viewport={{ once: true }}
           transition={{ delay: 0.5, duration: 0.6 }}
         >
-          ALL PLANS INCLUDE A 14-DAY FREE TRIAL · NO CARD REQUIRED · PAYSTACK & STRIPE
+          FREE PLAN FOREVER · NO CARD REQUIRED · PAYSTACK & STRIPE ACCEPTED
         </motion.p>
       </div>
     </section>

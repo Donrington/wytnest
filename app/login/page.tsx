@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { createClient } from '@/lib/supabase/client'
 
 const E_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
@@ -46,11 +47,20 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPw,   setShowPw]   = useState(false)
   const [loading,  setLoading]  = useState(false)
+  const [error,    setError]    = useState<string | null>(null)
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setLoading(true)
-    setTimeout(() => { window.location.href = '/dashboard' }, 900)
+    const supabase = createClient()
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    if (authError) {
+      setError(authError.message)
+      setLoading(false)
+      return
+    }
+    window.location.href = '/dashboard'
   }
 
   return (
@@ -207,6 +217,13 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
+
+            {error && (
+              <p className="rounded-lg px-3 py-2 text-[0.75rem]"
+                 style={{ background: 'rgba(248,71,71,0.08)', border: '1px solid rgba(248,71,71,0.2)', color: '#F87171' }}>
+                {error}
+              </p>
+            )}
 
             <motion.button
               type="submit" disabled={loading}

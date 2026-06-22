@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { createClient } from '@/lib/supabase/client'
 
 const E_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
@@ -104,12 +105,27 @@ export default function SignupPage() {
   const [showPw,   setShowPw]   = useState(false)
   const [agreed,   setAgreed]   = useState(false)
   const [loading,  setLoading]  = useState(false)
+  const [error,    setError]    = useState<string | null>(null)
+  const [confirmed, setConfirmed] = useState(false)
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!agreed) return
+    setError(null)
     setLoading(true)
-    setTimeout(() => { window.location.href = '/dashboard' }, 900)
+    const supabase = createClient()
+    const { error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name } },
+    })
+    if (authError) {
+      setError(authError.message)
+      setLoading(false)
+      return
+    }
+    setConfirmed(true)
+    setLoading(false)
   }
 
   return (
@@ -159,6 +175,16 @@ export default function SignupPage() {
             <span className="text-[0.63rem] font-medium" style={{ color: '#3E3B61' }}>or continue with email</span>
             <div className="h-px flex-1" style={{ background: 'rgba(123,110,245,0.12)' }} />
           </div>
+
+          {confirmed && (
+            <motion.div
+              className="mb-5 rounded-xl px-4 py-4 text-[0.82rem] leading-relaxed"
+              style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', color: '#34D399' }}
+              initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
+              <p className="font-semibold">Check your inbox!</p>
+              <p className="mt-0.5 opacity-80">We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.</p>
+            </motion.div>
+          )}
 
           <form onSubmit={submit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
@@ -236,8 +262,15 @@ export default function SignupPage() {
               </span>
             </label>
 
+            {error && (
+              <p className="rounded-lg px-3 py-2 text-[0.75rem]"
+                 style={{ background: 'rgba(248,71,71,0.08)', border: '1px solid rgba(248,71,71,0.2)', color: '#F87171' }}>
+                {error}
+              </p>
+            )}
+
             <motion.button
-              type="submit" disabled={loading || !agreed}
+              type="submit" disabled={loading || !agreed || confirmed}
               className="mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[0.85rem] font-bold disabled:opacity-50"
               style={{ background: 'linear-gradient(135deg, #F8C352, #E8960F)', color: '#080716' }}
               whileHover={{ scale: loading || !agreed ? 1 : 1.02 }}
@@ -307,7 +340,7 @@ export default function SignupPage() {
               FREE PLAN INCLUDES
             </p>
             <ul className="mt-2.5 flex flex-col gap-1.5">
-              {['Up to 25 testimonials', '1 active campaign', 'All 3 widget types', 'Unlimited embed views'].map(f => (
+              {['Up to 5 text testimonials', '1 active campaign', '1 embed widget', 'Unlimited embed views'].map(f => (
                 <li key={f} className="flex items-center gap-2 text-[0.78rem]" style={{ color: '#9897B3' }}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                     <path d="M20 6L9 17l-5-5" stroke="#34D399" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"/>
