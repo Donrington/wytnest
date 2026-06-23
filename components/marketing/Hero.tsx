@@ -213,7 +213,7 @@ export function Hero() {
 
   return (
     <section
-      className="relative flex min-h-[100dvh] flex-col justify-end overflow-hidden pb-14 pt-24 sm:pb-20 sm:pt-28"
+      className="relative flex min-h-[100dvh] flex-col justify-center overflow-hidden pb-16 pt-20 sm:justify-end sm:pb-20 sm:pt-24 lg:pt-28"
       onMouseMove={(e) => { mouseX.set(e.clientX); mouseY.set(e.clientY) }}
     >
       <ParticleField />
@@ -235,9 +235,18 @@ export function Hero() {
         aria-hidden="true"
       />
 
-      {/* Directional vignette — heavy left (text readable), dissolves right (WitnessWall shows through) */}
+      {/* Mobile vignette — uniform center-dark so text is readable over full-width WitnessWall */}
       <div
-        className="pointer-events-none absolute inset-0 -z-[4]"
+        className="pointer-events-none absolute inset-0 -z-[4] sm:hidden"
+        style={{
+          background: 'radial-gradient(ellipse 110% 80% at 50% 60%, rgba(8,7,22,0.96) 0%, rgba(8,7,22,0.88) 45%, rgba(8,7,22,0.55) 100%)',
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Desktop vignette — heavy left (text readable), dissolves right (WitnessWall shows through) */}
+      <div
+        className="pointer-events-none absolute inset-0 -z-[4] hidden sm:block"
         style={{
           background: 'linear-gradient(102deg, rgba(8,7,22,0.98) 0%, rgba(8,7,22,0.93) 24%, rgba(8,7,22,0.62) 48%, rgba(8,7,22,0.14) 72%, rgba(8,7,22,0.03) 100%)',
         }}
@@ -257,7 +266,7 @@ export function Hero() {
 
         {/* ── Eyebrow — architectural: gold rule + pulse dot + tracking label ── */}
         <motion.div
-          className="mb-9 flex items-center gap-3.5 sm:mb-11"
+          className="mb-7 flex items-center gap-3 sm:mb-9 sm:gap-3.5"
           initial={{ opacity: 0, x: -18 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.75, delay: 0.12, ease: EASE_OUT }}
@@ -270,13 +279,13 @@ export function Hero() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold-400 opacity-70" />
             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-gold-400" />
           </span>
-          <span className="eyebrow tracking-[0.22em] text-carbon-500">
+          <span className="eyebrow tracking-[0.14em] text-carbon-500 sm:tracking-[0.22em]">
             <CountUp to={2847} /> testimonials captured today
           </span>
         </motion.div>
 
         {/* ── Mobile / tablet heading (hidden on lg+) — left aligned ── */}
-        <div className="mb-8 sm:mb-10 lg:hidden">
+        <div className="mb-6 sm:mb-10 lg:hidden">
           <motion.h1
             className="font-black leading-[1.04] tracking-[-0.04em]"
             style={{ fontFamily: FONT_D, fontSize: 'clamp(2.6rem, 9.5vw, 4.5rem)', color: '#EDEAFF' }}
@@ -334,14 +343,14 @@ export function Hero() {
           <div className="flex flex-col gap-6">
 
             {/* Description */}
-            <p className="max-w-[40ch] text-[1rem] leading-[1.82] tracking-[0.012em] text-carbon-300
+            <p className="max-w-none text-[0.95rem] leading-[1.75] tracking-[0.01em] text-carbon-300
                           sm:max-w-[46ch] sm:text-[1.1rem] lg:max-w-[38ch] lg:text-[1.22rem]">
               <Words text="Collect video and text testimonials on autopilot. Display them in widgets so well-made your landing page looks agency-built — and converts like it." />
             </p>
 
             {/* CTAs */}
             <motion.div
-              className="flex flex-wrap items-center gap-4"
+              className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65, delay: 1.55, ease: EASE_OUT }}
@@ -349,7 +358,7 @@ export function Hero() {
               {/* Primary — button-in-button pattern */}
               <motion.a
                 href="/signup"
-                className="group inline-flex items-center gap-0 rounded-full bg-gold-400 py-1.5 pl-7 pr-1.5"
+                className="group inline-flex w-full items-center justify-between gap-0 rounded-full bg-gold-400 py-1.5 pl-7 pr-1.5 sm:w-auto sm:justify-start"
                 style={{ boxShadow: '0 12px 48px -12px rgba(232,150,15,0.55)', willChange: 'transform' }}
                 whileHover={{
                   scale: 1.03,
@@ -403,7 +412,7 @@ export function Hero() {
 
             {/* Stats row — concrete numbers replace generic trust badges */}
             <motion.div
-              className="flex items-start gap-8 border-t pt-6"
+              className="flex flex-wrap items-start gap-x-5 gap-y-4 border-t pt-5 sm:gap-x-8 sm:pt-6"
               style={{ borderColor: 'rgba(255,255,255,0.06)' }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -436,10 +445,10 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Scroll indicator — minimal, bottom-left aligned with content */}
+      {/* Scroll indicator — hidden on mobile, bottom-left on sm+ */}
       <motion.button
         onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
-        className="group absolute bottom-7 left-6 flex flex-col items-center gap-2 sm:left-10 lg:left-16 xl:left-20"
+        className="group absolute bottom-7 left-6 hidden flex-col items-center gap-2 sm:flex sm:left-10 lg:left-16 xl:left-20"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 2.15, ease: EASE_OUT }}
