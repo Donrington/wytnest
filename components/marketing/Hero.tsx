@@ -266,7 +266,7 @@ export function Hero() {
 
         {/* ── Eyebrow — architectural: gold rule + pulse dot + tracking label ── */}
         <motion.div
-          className="mb-7 flex items-center gap-3 sm:mb-9 sm:gap-3.5"
+          className="mb-7 flex items-center justify-center gap-3 sm:mb-9 sm:justify-start sm:gap-3.5"
           initial={{ opacity: 0, x: -18 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.75, delay: 0.12, ease: EASE_OUT }}
@@ -284,8 +284,8 @@ export function Hero() {
           </span>
         </motion.div>
 
-        {/* ── Mobile / tablet heading (hidden on lg+) — left aligned ── */}
-        <div className="mb-6 sm:mb-10 lg:hidden">
+        {/* ── Mobile / tablet heading (hidden on lg+) ── */}
+        <div className="mb-6 text-center sm:mb-10 sm:text-left lg:hidden">
           <motion.h1
             className="font-black leading-[1.04] tracking-[-0.04em]"
             style={{ fontFamily: FONT_D, fontSize: 'clamp(2.6rem, 9.5vw, 4.5rem)', color: '#EDEAFF' }}
@@ -316,14 +316,14 @@ export function Hero() {
             </span>
           </motion.div>
 
-          {/* Foil underline — draws from left, not centered */}
+          {/* Foil underline */}
           <motion.div
-            className="mt-3 rounded-full"
+            className="mx-auto mt-3 rounded-full sm:mx-0"
             style={{
               height: 3,
               width: 'min(54%, 220px)',
               background: 'linear-gradient(90deg, #F8C352 0%, #E8960F 60%, #B5700A 100%)',
-              originX: 0,
+              originX: 0.5,
             }}
             initial={{ scaleX: 0, opacity: 0 }}
             animate={{ scaleX: 1, opacity: 1 }}
@@ -343,14 +343,14 @@ export function Hero() {
           <div className="flex flex-col gap-6">
 
             {/* Description */}
-            <p className="max-w-none text-[0.95rem] leading-[1.75] tracking-[0.01em] text-carbon-300
-                          sm:max-w-[46ch] sm:text-[1.1rem] lg:max-w-[38ch] lg:text-[1.22rem]">
+            <p className="max-w-none text-center text-[0.95rem] leading-[1.75] tracking-[0.01em] text-carbon-300
+                          sm:max-w-[46ch] sm:text-left sm:text-[1.1rem] lg:max-w-[38ch] lg:text-[1.22rem]">
               <Words text="Collect video and text testimonials on autopilot. Display them in widgets so well-made your landing page looks agency-built — and converts like it." />
             </p>
 
             {/* CTAs */}
             <motion.div
-              className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4"
+              className="flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-start sm:gap-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65, delay: 1.55, ease: EASE_OUT }}
@@ -412,7 +412,7 @@ export function Hero() {
 
             {/* Stats row — concrete numbers replace generic trust badges */}
             <motion.div
-              className="flex flex-wrap items-start gap-x-5 gap-y-4 border-t pt-5 sm:gap-x-8 sm:pt-6"
+              className="flex flex-wrap justify-center gap-x-5 gap-y-4 border-t pt-5 sm:justify-start sm:gap-x-8 sm:pt-6"
               style={{ borderColor: 'rgba(255,255,255,0.06)' }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -423,7 +423,7 @@ export function Hero() {
                 { value: '94.3%', label: 'publish rate' },
                 { value: '47 sec', label: 'avg to collect' },
               ].map((s, i) => (
-                <div key={i} className="shrink-0">
+                <div key={i} className="shrink-0 text-center sm:text-left">
                   <p
                     className="font-mono text-[1.15rem] font-semibold tracking-tight text-ink-100"
                     style={{ fontVariantNumeric: 'tabular-nums' }}
