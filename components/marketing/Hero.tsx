@@ -43,8 +43,6 @@ function Words({ text }: { text: string }) {
   return (
     <motion.span variants={wordContainer} initial="hidden" animate="show" aria-label={text}>
       {parts.map((word, i) => (
-        // Space sits OUTSIDE overflow:hidden — CSS collapses trailing whitespace
-        // inside inline-block blocks, causing words to appear stuck together.
         <span key={i}>
           <span
             className="inline-block overflow-hidden"
@@ -207,16 +205,15 @@ function ParticleField() {
   return <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 -z-20" aria-hidden="true" />
 }
 
-// ── Hero ─────────────────────────────────────────────────────────────────────
+// ── Hero ──────────────────────────────────────────────────────────────────────
 export function Hero() {
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
-  const spotlight = useMotionTemplate`radial-gradient(650px circle at ${mouseX}px ${mouseY}px, rgba(79,63,204,0.11) 0%, transparent 70%)`
+  const spotlight = useMotionTemplate`radial-gradient(650px circle at ${mouseX}px ${mouseY}px, rgba(79,63,204,0.10) 0%, transparent 70%)`
 
   return (
     <section
-      className="relative flex min-h-[100svh] flex-col justify-center overflow-hidden
-                 pt-24 pb-14 sm:pt-28 sm:pb-20"
+      className="relative flex min-h-[100dvh] flex-col justify-end overflow-hidden pb-14 pt-24 sm:pb-20 sm:pt-28"
       onMouseMove={(e) => { mouseX.set(e.clientX); mouseY.set(e.clientY) }}
     >
       <ParticleField />
@@ -229,47 +226,57 @@ export function Hero() {
         aria-hidden="true"
       />
 
-      {/* Violet aurora */}
+      {/* Violet aurora — shifted right so WitnessWall glows on the right half */}
       <div
-        className="pointer-events-none absolute left-1/2 top-[44%] -z-[5]
-                   h-[900px] w-[1200px] -translate-x-1/2 -translate-y-1/2
-                   rounded-full opacity-[0.28] blur-[180px] animate-glow-pulse"
-        style={{ background: 'radial-gradient(ellipse, #4F3FCC 0%, #7B6EF5 40%, transparent 70%)' }}
+        className="pointer-events-none absolute right-[4%] top-[42%] -z-[5]
+                   h-[860px] w-[1000px] -translate-y-1/2
+                   rounded-full opacity-[0.24] blur-[170px] animate-glow-pulse"
+        style={{ background: 'radial-gradient(ellipse, #4F3FCC 0%, #7B6EF5 42%, transparent 70%)' }}
         aria-hidden="true"
       />
-      {/* Night vignette */}
+
+      {/* Directional vignette — heavy left (text readable), dissolves right (WitnessWall shows through) */}
       <div
         className="pointer-events-none absolute inset-0 -z-[4]"
         style={{
-          background: 'radial-gradient(ellipse 80% 65% at 50% 46%, rgba(10,9,23,0.93) 0%, rgba(10,9,23,0.76) 48%, rgba(10,9,23,0.40) 100%)',
+          background: 'linear-gradient(102deg, rgba(8,7,22,0.98) 0%, rgba(8,7,22,0.93) 24%, rgba(8,7,22,0.62) 48%, rgba(8,7,22,0.14) 72%, rgba(8,7,22,0.03) 100%)',
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Top & bottom edge vignette */}
+      <div
+        className="pointer-events-none absolute inset-0 -z-[3]"
+        style={{
+          background: 'linear-gradient(to bottom, rgba(8,7,22,0.78) 0%, transparent 17%, transparent 72%, rgba(8,7,22,0.88) 100%)',
         }}
         aria-hidden="true"
       />
 
       <div className="relative mx-auto w-full max-w-9xl px-6 sm:px-10 lg:px-16 xl:px-20">
 
-        {/* ── Eyebrow — centred on mobile, left on lg+ ── */}
-        <div className="mb-8 flex justify-center sm:mb-10 lg:justify-start">
-          <motion.div
-            className="inline-flex items-center gap-3 rounded-full
-                       bg-ink-200/[0.06] px-5 py-2.5 backdrop-blur-md"
-            style={{ boxShadow: '0 0 0 1px rgba(176,168,252,0.15), 0 0 20px -4px rgba(79,63,204,0)' }}
-            initial={{ opacity: 0, y: 20, filter: 'blur(8px)', boxShadow: '0 0 0 1px rgba(176,168,252,0.15), 0 0 20px -4px rgba(79,63,204,0)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)', boxShadow: ['0 0 0 1px rgba(176,168,252,0.15), 0 0 20px -4px rgba(79,63,204,0)', '0 0 0 1px rgba(176,168,252,0.35), 0 0 28px -4px rgba(79,63,204,0.45)', '0 0 0 1px rgba(176,168,252,0.15), 0 0 20px -4px rgba(79,63,204,0)'] }}
-            transition={{ duration: 0.8, delay: 0.15, ease: EASE_OUT, boxShadow: { delay: 1.8, duration: 2.8, repeat: Infinity, ease: 'easeInOut' } }}
-          >
-            <span className="relative flex h-2 w-2 shrink-0">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-gold-400" />
-            </span>
-            <span className="eyebrow tracking-[0.22em] text-ink-100/80">
-              <CountUp to={1247} /> testimonials captured today
-            </span>
-          </motion.div>
-        </div>
+        {/* ── Eyebrow — architectural: gold rule + pulse dot + tracking label ── */}
+        <motion.div
+          className="mb-9 flex items-center gap-3.5 sm:mb-11"
+          initial={{ opacity: 0, x: -18 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.75, delay: 0.12, ease: EASE_OUT }}
+        >
+          <div
+            className="h-px w-9 shrink-0"
+            style={{ background: 'linear-gradient(90deg, #F8C352, #E8960F)' }}
+          />
+          <span className="relative flex h-1.5 w-1.5 shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold-400 opacity-70" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-gold-400" />
+          </span>
+          <span className="eyebrow tracking-[0.22em] text-carbon-500">
+            <CountUp to={2847} /> testimonials captured today
+          </span>
+        </motion.div>
 
-        {/* ── Mobile / tablet heading (hidden on lg+) ── */}
-        <div className="mb-8 text-center sm:mb-10 lg:hidden">
+        {/* ── Mobile / tablet heading (hidden on lg+) — left aligned ── */}
+        <div className="mb-8 sm:mb-10 lg:hidden">
           <motion.h1
             className="font-black leading-[1.04] tracking-[-0.04em]"
             style={{ fontFamily: FONT_D, fontSize: 'clamp(2.6rem, 9.5vw, 4.5rem)', color: '#EDEAFF' }}
@@ -300,14 +307,14 @@ export function Hero() {
             </span>
           </motion.div>
 
-          {/* Foil underline — draws in from centre */}
+          {/* Foil underline — draws from left, not centered */}
           <motion.div
-            className="mx-auto mt-3 rounded-full"
+            className="mt-3 rounded-full"
             style={{
               height: 3,
               width: 'min(54%, 220px)',
               background: 'linear-gradient(90deg, #F8C352 0%, #E8960F 60%, #B5700A 100%)',
-              originX: 0.5,
+              originX: 0,
             }}
             initial={{ scaleX: 0, opacity: 0 }}
             animate={{ scaleX: 1, opacity: 1 }}
@@ -320,139 +327,147 @@ export function Hero() {
           <HeadlineSVG />
         </div>
 
-        {/* ── Bottom row ── */}
-        <div className="mt-8 flex flex-col items-center gap-8
-                        sm:mt-10 lg:mt-12 lg:flex-row lg:items-end lg:justify-between lg:gap-20 xl:mt-14">
+        {/* ── Below headline: asymmetric editorial split ── */}
+        <div className="mt-8 grid grid-cols-1 gap-8 lg:mt-10 lg:grid-cols-[54fr_46fr] xl:mt-12">
 
-          {/* Description */}
-          <p className="max-w-[34ch] text-center text-[1rem] leading-[1.82] tracking-[0.012em] text-carbon-300
-                        sm:max-w-[46ch] sm:text-[1.15rem]
-                        lg:max-w-[42ch] lg:text-left lg:text-[1.3rem]">
-            <Words text="Collect video and text testimonials on autopilot. Display them in widgets so well-made your landing page looks agency-built — and converts like it." />
-          </p>
+          {/* LEFT — description + CTAs + stats */}
+          <div className="flex flex-col gap-6">
 
-          <div className="flex w-full shrink-0 flex-col items-center gap-5 sm:w-auto lg:items-start">
-            {/* CTA pair */}
-            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+            {/* Description */}
+            <p className="max-w-[40ch] text-[1rem] leading-[1.82] tracking-[0.012em] text-carbon-300
+                          sm:max-w-[46ch] sm:text-[1.1rem] lg:max-w-[38ch] lg:text-[1.22rem]">
+              <Words text="Collect video and text testimonials on autopilot. Display them in widgets so well-made your landing page looks agency-built — and converts like it." />
+            </p>
+
+            {/* CTAs */}
+            <motion.div
+              className="flex flex-wrap items-center gap-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 1.55, ease: EASE_OUT }}
+            >
+              {/* Primary — button-in-button pattern */}
               <motion.a
-                href="/dashboard"
-                className="btn-magnetic group inline-flex items-center justify-center gap-2.5
-                           rounded-full bg-gold-400 px-8 py-4 font-body text-[1rem] font-semibold
-                           text-carbon-950 sm:text-[1.05rem] whitespace-nowrap"
-                style={{
-                  boxShadow: '0 12px 56px -12px rgba(232,150,15,0.6)',
-                  willChange: 'transform',
-                }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.65, delay: 1.55, ease: EASE_OUT }}
+                href="/signup"
+                className="group inline-flex items-center gap-0 rounded-full bg-gold-400 py-1.5 pl-7 pr-1.5"
+                style={{ boxShadow: '0 12px 48px -12px rgba(232,150,15,0.55)', willChange: 'transform' }}
                 whileHover={{
                   scale: 1.03,
-                  boxShadow: '0 16px 64px -10px rgba(232,150,15,0.75)',
+                  boxShadow: '0 16px 56px -10px rgba(232,150,15,0.72)',
                   transition: { duration: 0.25, ease: EASE_OUT },
                 }}
                 whileTap={{ scale: 0.97, transition: { duration: 0.12 } }}
               >
-                Start collecting free
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                     className="transition-transform duration-300 group-hover:translate-x-1">
-                  <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2.2"
-                        strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <span className="pr-5 font-body text-[0.95rem] font-semibold text-carbon-950 whitespace-nowrap">
+                  Start collecting free
+                </span>
+                {/* Nested icon circle */}
+                <span
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-black/[0.09]
+                             transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
+                             group-hover:translate-x-0.5 group-hover:-translate-y-px group-hover:bg-black/[0.14]"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2.2"
+                          strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
               </motion.a>
 
+              {/* Secondary — icon circle + text link (no ghost pill border) */}
               <motion.a
                 href="#widgets"
-                className="inline-flex items-center justify-center gap-2.5 rounded-full
-                           px-8 py-4 font-body text-[1rem] font-medium text-carbon-50
-                           sm:text-[1.05rem] whitespace-nowrap"
-                style={{
-                  backgroundColor: 'rgba(176,168,252,0.05)',
-                  borderWidth: '1px',
-                  borderStyle: 'solid',
-                  borderColor: 'rgba(176,168,252,0.2)',
-                  backdropFilter: 'blur(4px)',
-                  WebkitBackdropFilter: 'blur(4px)',
-                  willChange: 'transform',
-                }}
+                className="inline-flex items-center gap-2.5 text-[0.88rem] font-medium text-carbon-400
+                           transition-colors duration-300 hover:text-carbon-100"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.65, delay: 1.7, ease: EASE_OUT }}
-                whileHover={{
-                  scale: 1.02,
-                  borderColor: 'rgba(176,168,252,0.4)',
-                  backgroundColor: 'rgba(176,168,252,0.1)',
-                  transition: { duration: 0.25, ease: EASE_OUT },
-                }}
-                whileTap={{ scale: 0.97, transition: { duration: 0.12 } }}
+                whileTap={{ scale: 0.97 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-                  <path d="M10 8l5 4-5 4V8z" fill="currentColor" />
-                </svg>
+                <span
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full
+                             transition-colors duration-300"
+                  style={{
+                    background: 'rgba(176,168,252,0.06)',
+                    border: '1px solid rgba(176,168,252,0.14)',
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.8" />
+                    <path d="M10 8l5 4-5 4V8z" fill="currentColor" />
+                  </svg>
+                </span>
                 See live widgets
               </motion.a>
-            </div>
+            </motion.div>
 
-            {/* Trust badges */}
+            {/* Stats row — concrete numbers replace generic trust badges */}
             <motion.div
-              className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 lg:justify-start"
+              className="flex items-start gap-8 border-t pt-6"
+              style={{ borderColor: 'rgba(255,255,255,0.06)' }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 1.85, ease: EASE_OUT }}
             >
-              {['No card required', '14-day trial', 'Paystack & cards'].map((label, i, arr) => (
-                <span key={label} className="flex items-center gap-4">
-                  <span className="eyebrow tracking-[0.16em] text-carbon-500">{label}</span>
-                  {i < arr.length - 1 && <span className="h-px w-4 bg-carbon-800" aria-hidden="true" />}
-                </span>
+              {[
+                { value: '2,847', label: 'testimonials captured' },
+                { value: '94.3%', label: 'publish rate' },
+                { value: '47 sec', label: 'avg to collect' },
+              ].map((s, i) => (
+                <div key={i} className="shrink-0">
+                  <p
+                    className="font-mono text-[1.15rem] font-semibold tracking-tight text-ink-100"
+                    style={{ fontVariantNumeric: 'tabular-nums' }}
+                  >
+                    {s.value}
+                  </p>
+                  <p className="mt-0.5 text-[0.6rem] tracking-[0.12em] uppercase text-carbon-600">
+                    {s.label}
+                  </p>
+                </div>
               ))}
             </motion.div>
+
           </div>
+
+          {/* RIGHT — empty; directional vignette dissolves here so WitnessWall glows through */}
+          <div className="hidden lg:block" aria-hidden="true" />
+
         </div>
       </div>
 
-      {/* Scroll indicator */}
+      {/* Scroll indicator — minimal, bottom-left aligned with content */}
       <motion.button
         onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
-        className="group absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2.5"
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 2.1, ease: EASE_OUT }}
-        whileHover={{ y: -4, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } }}
+        className="group absolute bottom-7 left-6 flex flex-col items-center gap-2 sm:left-10 lg:left-16 xl:left-20"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 2.15, ease: EASE_OUT }}
         aria-label="Scroll down"
       >
-        {/* Mouse body */}
         <motion.div
-          className="relative flex h-10 w-[1.45rem] items-start justify-center overflow-hidden rounded-[20px] pt-[7px]"
+          className="relative flex h-8 w-5 items-start justify-center overflow-hidden rounded-[12px] pt-[5px]"
           style={{
-            border: '1.5px solid rgba(176,168,252,0.18)',
-            background: 'rgba(18,16,38,0.45)',
-            backdropFilter: 'blur(14px)',
-            WebkitBackdropFilter: 'blur(14px)',
+            border: '1px solid rgba(176,168,252,0.13)',
+            background: 'rgba(18,16,38,0.32)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
           }}
           whileHover={{
-            borderColor: 'rgba(248,195,82,0.45)',
-            boxShadow: '0 0 18px -4px rgba(232,150,15,0.28)',
+            borderColor: 'rgba(248,195,82,0.32)',
+            boxShadow: '0 0 12px -4px rgba(232,150,15,0.18)',
           }}
           transition={{ duration: 0.3 }}
         >
-          {/* Scrolling dot */}
           <motion.div
-            className="h-[5px] w-[5px] shrink-0 rounded-full"
+            className="h-1 w-1 shrink-0 rounded-full"
             style={{ background: '#E8960F' }}
-            animate={{ y: [0, 11, 0], opacity: [1, 0.35, 1] }}
-            transition={{
-              duration: 1.55,
-              repeat: Infinity,
-              ease: [0.4, 0, 0.6, 1],
-              repeatDelay: 0.25,
-            }}
+            animate={{ y: [0, 8, 0], opacity: [1, 0.35, 1] }}
+            transition={{ duration: 1.55, repeat: Infinity, ease: [0.4, 0, 0.6, 1], repeatDelay: 0.25 }}
           />
         </motion.div>
-
-        <span className="eyebrow tracking-[0.26em] text-carbon-700 transition-colors duration-300
-                         group-hover:text-carbon-400">
+        <span className="eyebrow text-[0.48rem] tracking-[0.32em] text-carbon-700
+                         transition-colors duration-300 group-hover:text-carbon-500">
           scroll
         </span>
       </motion.button>
