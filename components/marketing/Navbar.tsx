@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
+
+type AuthUser = { name: string; email: string; initials: string }
 
 const NAV_LINKS = [
   { label: 'Widgets',      href: '#widgets' },
@@ -87,7 +90,11 @@ function Logo() {
 }
 
 // ── Mobile overlay ────────────────────────────────────────────────────────────
-function MobileOverlay({ onClose }: { onClose: () => void }) {
+function MobileOverlay({ onClose, authUser, onSignOut }: {
+  onClose: () => void
+  authUser: AuthUser | null
+  onSignOut: () => void
+}) {
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = '' }
@@ -144,7 +151,10 @@ function MobileOverlay({ onClose }: { onClose: () => void }) {
             animate="visible"
             exit="exit"
           >
-            {[...NAV_LINKS, { label: 'Sign in', href: '/login' }].map((l) => (
+            {[...NAV_LINKS, authUser
+              ? { label: 'Dashboard', href: '/dashboard' }
+              : { label: 'Sign in',   href: '/login'     },
+            ].map((l) => (
               <motion.li
                 key={l.label}
                 className="border-b border-ink-200/[0.08]"
@@ -185,7 +195,7 @@ function MobileOverlay({ onClose }: { onClose: () => void }) {
 
           {/* CTA */}
           <motion.a
-            href="/signup"
+            href={authUser ? '/dashboard' : '/signup'}
             onClick={onClose}
             className="group relative mt-8 flex h-14 w-full items-center justify-center gap-2 overflow-hidden rounded-full font-bold text-base"
             style={{ background: '#E8960F', color: '#0A0917' }}
@@ -197,15 +207,41 @@ function MobileOverlay({ onClose }: { onClose: () => void }) {
             whileTap={{ scale: 0.97 }}
             transition={SPRING}
           >
-            {/* Shimmer sweep */}
-            <span
-              className="pointer-events-none absolute inset-0 -translate-x-full skew-x-[-20deg] bg-white/20 transition-transform duration-700 ease-out group-hover:translate-x-[200%]"
-            />
-            <span className="relative">Start collecting free</span>
-            <svg className="relative" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-              <path d="M5 12h14M13 6l6 6-6 6" />
-            </svg>
+            <span className="pointer-events-none absolute inset-0 -translate-x-full skew-x-[-20deg] bg-white/20 transition-transform duration-700 ease-out group-hover:translate-x-[200%]" />
+            {authUser ? (
+              <>
+                <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-black/20 text-[0.72rem] font-black">
+                  {authUser.initials}
+                </span>
+                <span className="relative">Go to dashboard</span>
+              </>
+            ) : (
+              <>
+                <span className="relative">Start collecting free</span>
+                <svg className="relative" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </>
+            )}
           </motion.a>
+
+          {/* Sign out — only when logged in */}
+          {authUser && (
+            <motion.button
+              onClick={() => { onSignOut(); onClose() }}
+              className="mt-3 flex w-full items-center justify-center gap-2 py-3 text-[0.82rem] font-medium text-carbon-600 transition-colors hover:text-carbon-400"
+              variants={ctaItem}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"
+                      stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Sign out
+            </motion.button>
+          )}
         </nav>
 
         {/* Footer meta */}
@@ -248,15 +284,40 @@ const pillEnter = (delay: number): Variants => ({
 
 // ── Navbar ────────────────────────────────────────────────────────────────────
 export function Navbar() {
-  const [scrolled,      setScrolled]      = useState(false)
-  const [mobileOpen,    setMobileOpen]    = useState(false)
-  const [hoveredLink,   setHoveredLink]   = useState<string | null>(null)
+  const [scrolled,    setScrolled]    = useState(false)
+  const [mobileOpen,  setMobileOpen]  = useState(false)
+  const [hoveredLink, setHoveredLink] = useState<string | null>(null)
+  const [authUser,    setAuthUser]    = useState<AuthUser | null>(null)
 
   useEffect(() => {
     const handle = () => setScrolled(window.scrollY > 44)
     window.addEventListener('scroll', handle, { passive: true })
     return () => window.removeEventListener('scroll', handle)
   }, [])
+
+  useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem('wytnest-auth-user')
+      if (cached) { setAuthUser(JSON.parse(cached)); return }
+    } catch {}
+    createClient().auth.getUser().then(({ data }) => {
+      if (!data.user) return
+      const name = (data.user.user_metadata?.full_name as string | undefined)
+        || data.user.email?.split('@')[0]
+        || 'User'
+      const email = data.user.email ?? ''
+      const initials = name.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase()
+      const u: AuthUser = { name, email, initials }
+      setAuthUser(u)
+      try { sessionStorage.setItem('wytnest-auth-user', JSON.stringify(u)) } catch {}
+    })
+  }, [])
+
+  const handleSignOut = async () => {
+    try { sessionStorage.removeItem('wytnest-auth-user') } catch {}
+    await createClient().auth.signOut()
+    window.location.href = '/'
+  }
 
   const scrollTx = { duration: 0.45, ease: E_OUT }
 
@@ -288,7 +349,10 @@ export function Navbar() {
             aria-label="Primary navigation"
             onMouseLeave={() => setHoveredLink(null)}
           >
-            {[...NAV_LINKS, { label: 'Sign in', href: '/login' }].map((l, i) => (
+            {[...NAV_LINKS, authUser
+              ? { label: 'Dashboard', href: '/dashboard' }
+              : { label: 'Sign in',   href: '/login'     },
+            ].map((l, i) => (
               <div key={l.href} className="flex items-center">
                 {i > 0 && <span className="h-4 w-px bg-ink-200/[0.12]" aria-hidden="true" />}
                 <a
@@ -316,7 +380,7 @@ export function Navbar() {
 
           {/* ── CTA pill — desktop ── */}
           <motion.a
-            href="/signup"
+            href={authUser ? '/dashboard' : '/signup'}
             className="group relative hidden h-12 items-center gap-2 overflow-hidden rounded-full px-5 text-[13px] font-bold md:inline-flex"
             style={{ background: '#E8960F', color: '#0A0917' }}
             variants={pillEnter(0.24)}
@@ -331,17 +395,27 @@ export function Navbar() {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.97 }}
           >
-            {/* Shimmer sweep on hover */}
             <span className="pointer-events-none absolute inset-0 -translate-x-full skew-x-[-20deg] bg-white/25 transition-transform duration-600 ease-out group-hover:translate-x-[200%]" />
-            <span className="relative">Start free</span>
-            <motion.svg
-              className="relative"
-              width="13" height="13" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"
-              variants={{ hovered: { x: 2 } }}
-            >
-              <path d="M5 12h14M13 6l6 6-6 6" />
-            </motion.svg>
+            {authUser ? (
+              <>
+                <span className="relative flex h-6 w-6 items-center justify-center rounded-full bg-black/20 text-[0.6rem] font-black">
+                  {authUser.initials}
+                </span>
+                <span className="relative">{authUser.name.split(' ')[0]}</span>
+              </>
+            ) : (
+              <>
+                <span className="relative">Start free</span>
+                <motion.svg
+                  className="relative"
+                  width="13" height="13" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"
+                  variants={{ hovered: { x: 2 } }}
+                >
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </motion.svg>
+              </>
+            )}
           </motion.a>
 
           {/* ── Mobile pill bar ── */}
@@ -376,7 +450,13 @@ export function Navbar() {
       </header>
 
       <AnimatePresence>
-        {mobileOpen && <MobileOverlay onClose={() => setMobileOpen(false)} />}
+        {mobileOpen && (
+          <MobileOverlay
+            onClose={() => setMobileOpen(false)}
+            authUser={authUser}
+            onSignOut={handleSignOut}
+          />
+        )}
       </AnimatePresence>
     </>
   )
