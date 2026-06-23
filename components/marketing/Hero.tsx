@@ -469,7 +469,7 @@ export function Hero() {
       {/* Scroll indicator — hidden on mobile, bottom-left on sm+ */}
       <motion.button
         onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
-        className="group absolute bottom-7 left-6 hidden flex-col items-center gap-2 sm:flex sm:left-10 lg:left-16 xl:left-20"
+        className="group absolute bottom-7 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 sm:flex"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 2.15, ease: EASE_OUT }}
