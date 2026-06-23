@@ -32,12 +32,9 @@ function WallCard({ t }: { t: MockTestimonial }) {
 
   return (
     <figure
-      className="group relative cursor-default overflow-hidden rounded-[1.15rem] p-5
-                 transition-all duration-500 ease-out hover:-translate-y-1.5"
+      className="group relative cursor-default overflow-hidden rounded-[1.15rem] p-5"
       style={{
-        background: 'linear-gradient(160deg, rgba(30,26,66,0.62) 0%, rgba(13,11,30,0.68) 100%)',
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
+        background: 'linear-gradient(160deg, rgba(30,26,66,0.92) 0%, rgba(13,11,30,0.95) 100%)',
         boxShadow: `
           0 0 0 1px ${ac.border},
           0 1px 0 0 rgba(255,255,255,0.07) inset,
@@ -101,7 +98,7 @@ function WallCard({ t }: { t: MockTestimonial }) {
           {t.type === 'video' && (
             <div className="relative ml-auto flex h-[22px] w-[22px] shrink-0 items-center justify-center">
               <span
-                className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-25"
+                className="absolute hidden sm:inline-flex h-full w-full animate-ping rounded-full opacity-25"
                 style={{ backgroundColor: ac.dot }}
               />
               <span
@@ -201,7 +198,7 @@ export function WitnessWall() {
 
   return (
     <div
-      className="pointer-events-none absolute inset-0 -z-10 grid grid-cols-2 gap-3.5 overflow-hidden px-3 md:grid-cols-4"
+      className="pointer-events-none absolute inset-0 -z-10 hidden sm:grid grid-cols-2 gap-3.5 overflow-hidden px-3 md:grid-cols-4"
       aria-hidden="true"
       style={{
         maskImage: 'linear-gradient(to bottom, transparent 0%, black 13%, black 87%, transparent 100%)',

@@ -38,7 +38,19 @@ const wordItem = {
   show:   { y: '0%', transition: { duration: 0.72, ease: EASE_OUT } },
 }
 
-function Words({ text }: { text: string }) {
+function Words({ text, isMobile = false }: { text: string; isMobile?: boolean }) {
+  if (isMobile) {
+    return (
+      <motion.span
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.9, ease: EASE_OUT }}
+        aria-label={text}
+      >
+        {text}
+      </motion.span>
+    )
+  }
   const parts = text.split(' ')
   return (
     <motion.span variants={wordContainer} initial="hidden" animate="show" aria-label={text}>
@@ -139,6 +151,8 @@ function ParticleField() {
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
+    // Skip on touch/mobile — Three.js WebGL is too GPU-intensive
+    if (window.matchMedia('(hover: none) and (pointer: coarse)').matches) return
 
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
@@ -210,27 +224,34 @@ export function Hero() {
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
   const spotlight = useMotionTemplate`radial-gradient(650px circle at ${mouseX}px ${mouseY}px, rgba(79,63,204,0.10) 0%, transparent 70%)`
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    setIsMobile(window.matchMedia('(hover: none) and (pointer: coarse)').matches)
+  }, [])
 
   return (
     <section
       className="relative flex min-h-[100dvh] flex-col justify-center overflow-hidden pb-16 pt-20 sm:justify-end sm:pb-20 sm:pt-24 lg:pt-28"
-      onMouseMove={(e) => { mouseX.set(e.clientX); mouseY.set(e.clientY) }}
+      onMouseMove={isMobile ? undefined : (e) => { mouseX.set(e.clientX); mouseY.set(e.clientY) }}
     >
       <ParticleField />
       <WitnessWall />
 
-      {/* Cursor spotlight */}
-      <motion.div
-        className="pointer-events-none absolute inset-0 -z-[3]"
-        style={{ background: spotlight }}
-        aria-hidden="true"
-      />
+      {/* Cursor spotlight — desktop only */}
+      {!isMobile && (
+        <motion.div
+          className="pointer-events-none absolute inset-0 -z-[3]"
+          style={{ background: spotlight }}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Violet aurora — shifted right so WitnessWall glows on the right half */}
       <div
-        className="pointer-events-none absolute right-[4%] top-[42%] -z-[5]
-                   h-[860px] w-[1000px] -translate-y-1/2
-                   rounded-full opacity-[0.24] blur-[170px] animate-glow-pulse"
+        className="pointer-events-none absolute right-[4%] top-[42%] -z-[5] -translate-y-1/2 rounded-full
+                   h-[280px] w-[320px] opacity-[0.16] blur-[80px]
+                   sm:h-[860px] sm:w-[1000px] sm:opacity-[0.24] sm:blur-[170px] sm:animate-glow-pulse"
         style={{ background: 'radial-gradient(ellipse, #4F3FCC 0%, #7B6EF5 42%, transparent 70%)' }}
         aria-hidden="true"
       />
@@ -345,7 +366,7 @@ export function Hero() {
             {/* Description */}
             <p className="max-w-none text-center text-[0.95rem] leading-[1.75] tracking-[0.01em] text-carbon-300
                           sm:max-w-[46ch] sm:text-left sm:text-[1.1rem] lg:max-w-[38ch] lg:text-[1.22rem]">
-              <Words text="Collect video and text testimonials on autopilot. Display them in widgets so well-made your landing page looks agency-built — and converts like it." />
+              <Words text="Collect video and text testimonials on autopilot. Display them in widgets so well-made your landing page looks agency-built — and converts like it." isMobile={isMobile} />
             </p>
 
             {/* CTAs */}

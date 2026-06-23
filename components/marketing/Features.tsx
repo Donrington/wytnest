@@ -77,8 +77,6 @@ export function Features() {
                   borderWidth: 1,
                   borderStyle: 'solid',
                   borderColor: active ? '#E8960F' : 'rgba(176,168,252,0.1)',
-                  backdropFilter: 'blur(12px)',
-                  WebkitBackdropFilter: 'blur(12px)',
                   boxShadow: active
                     ? '0 8px 30px -10px rgba(232,150,15,0.5), 0 0 0 1px rgba(232,150,15,0.3)'
                     : '0 0 0 1px rgba(0,0,0,0.2)',
@@ -111,10 +109,8 @@ export function Features() {
           <div
             className="relative rounded-[1.75rem] p-3 shadow-2xl shadow-black/60"
             style={{
-              background: 'linear-gradient(170deg, rgba(19,17,40,0.92) 0%, rgba(7,6,15,0.98) 100%)',
+              background: 'linear-gradient(170deg, rgba(19,17,40,0.97) 0%, rgba(7,6,15,0.99) 100%)',
               border: '1px solid rgba(176,168,252,0.1)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
               boxShadow: '0 0 0 1px rgba(176,168,252,0.07), 0 40px 100px -30px rgba(0,0,0,0.9)',
             }}
           >
