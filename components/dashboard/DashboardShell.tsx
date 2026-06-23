@@ -442,7 +442,7 @@ const ACTIVE_CAMPAIGNS = [
   { name: 'Onboarding Flow',  collected: 24, goal: 30 },
 ]
 
-function OverviewContent({ T }: { T: Theme }) {
+function OverviewContent({ T, onNewCampaign }: { T: Theme; onNewCampaign: () => void }) {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
   const dateStr = new Date().toLocaleDateString('en-US', {
@@ -607,8 +607,8 @@ function OverviewContent({ T }: { T: Theme }) {
 
           {/* Quick action */}
           <div className="px-5 pb-5">
-            <motion.a
-              href="/dashboard/campaigns/new"
+            <motion.button
+              onClick={onNewCampaign}
               className="flex h-9 w-full items-center justify-center gap-2 rounded-xl
                          text-[0.78rem] font-semibold"
               style={{
@@ -623,7 +623,7 @@ function OverviewContent({ T }: { T: Theme }) {
                 <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"/>
               </svg>
               New campaign
-            </motion.a>
+            </motion.button>
           </div>
         </div>
       </div>
@@ -1583,11 +1583,14 @@ export function DashboardShell({
   children?: React.ReactNode
   active?: string
 }) {
-  const [collapsed,  setCollapsed]  = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const [notifOpen,  setNotifOpen]  = useState(false)
-  const [isDark,     setIsDark]     = useState(true)
+  const [collapsed,    setCollapsed]    = useState(false)
+  const [mobileOpen,   setMobileOpen]   = useState(false)
+  const [notifOpen,    setNotifOpen]    = useState(false)
+  const [isDark,       setIsDark]       = useState(true)
+  const [showCreate,   setShowCreate]   = useState(false)
+  const [authUser,     setAuthUser]     = useState<{ name: string; email: string; initials: string } | null>(null)
   const notifRef = useRef<HTMLDivElement>(null)
+  const { workspace } = useWorkspace()
 
   const T = isDark ? DARK : LIGHT
 
@@ -1598,6 +1601,31 @@ export function DashboardShell({
   useEffect(() => {
     if (localStorage.getItem('wytnest-dash-theme') === 'light') setIsDark(false)
   }, [])
+
+  // Load auth user — session-cached to avoid repeat fetches
+  useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem('wytnest-auth-user')
+      if (cached) { setAuthUser(JSON.parse(cached)); return }
+    } catch {}
+    createClient().auth.getUser().then(({ data }) => {
+      if (!data.user) return
+      const name = (data.user.user_metadata?.full_name as string | undefined)
+        || data.user.email?.split('@')[0]
+        || 'User'
+      const email = data.user.email ?? ''
+      const initials = name.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase()
+      const u = { name, email, initials }
+      setAuthUser(u)
+      try { sessionStorage.setItem('wytnest-auth-user', JSON.stringify(u)) } catch {}
+    })
+  }, [])
+
+  const handleSignOut = async () => {
+    try { sessionStorage.removeItem('wytnest-auth-user') } catch {}
+    await createClient().auth.signOut()
+    window.location.href = '/'
+  }
 
   const toggleTheme = () => {
     setIsDark(prev => {
@@ -1619,11 +1647,22 @@ export function DashboardShell({
     return () => document.removeEventListener('mousedown', handle)
   }, [notifOpen])
 
+  const openCreate = () => setShowCreate(true)
+
   return (
     <div
       className="flex min-h-screen"
       style={{ background: T.rootBg, transition: 'background 0.3s' }}
     >
+      {showCreate && workspace && (
+        <CreateCampaignModal
+          workspaceId={workspace.id}
+          plan={workspace.plan ?? 'starter'}
+          isDark={isDark}
+          onCreated={() => setShowCreate(false)}
+          onClose={() => setShowCreate(false)}
+        />
+      )}
 
       {/* ── Sidebar (desktop only) ── */}
       <motion.aside
@@ -1810,7 +1849,7 @@ export function DashboardShell({
                          text-[0.7rem] font-bold tracking-wide text-white"
               style={{ background: 'linear-gradient(135deg, #4F3FCC, #7B6EF5)' }}
             >
-              SA
+              {authUser?.initials ?? '··'}
               <span
                 className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400"
                 style={{ border: `2px solid ${T.avatarRing}`, transition: 'border-color 0.25s' }}
@@ -1827,12 +1866,57 @@ export function DashboardShell({
                   exit={{ opacity: 0, x: -8 }}
                   transition={{ duration: 0.16, ease: E_OUT }}
                 >
-                  <p className="truncate text-[0.8rem] font-semibold" style={{ color: T.userName }}>Sage</p>
-                  <p className="truncate text-[0.66rem]" style={{ color: T.userEmail }}>kicsworldwide@gmail.com</p>
+                  <p className="truncate text-[0.8rem] font-semibold" style={{ color: T.userName }}>
+                    {authUser?.name ?? '·····'}
+                  </p>
+                  <p className="truncate text-[0.66rem]" style={{ color: T.userEmail }}>
+                    {authUser?.email ?? ''}
+                  </p>
                 </motion.div>
               )}
             </AnimatePresence>
+
+            <AnimatePresence initial={false}>
+              {!collapsed && (
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.14 }}
+                  onClick={handleSignOut}
+                  title="Sign out"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors"
+                  style={{ color: T.body }}
+                  onMouseEnter={e => (e.currentTarget.style.background = T.collapseBtnHoverBg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"
+                          stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
+
+          {/* Sign out — collapsed sidebar only */}
+          {collapsed && (
+            <div className="mt-1 flex justify-center">
+              <button
+                onClick={handleSignOut}
+                title="Sign out"
+                className="flex h-8 w-8 items-center justify-center rounded-xl transition-colors"
+                style={{ color: T.body }}
+                onMouseEnter={e => (e.currentTarget.style.background = T.collapseBtnHoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"
+                        stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       </motion.aside>
 
@@ -1933,14 +2017,31 @@ export function DashboardShell({
                 <div className="flex items-center gap-3 rounded-xl px-3 py-2">
                   <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[0.7rem] font-bold tracking-wide text-white"
                        style={{ background: 'linear-gradient(135deg, #4F3FCC, #7B6EF5)' }}>
-                    SA
+                    {authUser?.initials ?? '··'}
                     <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400"
                           style={{ border: `2px solid ${T.avatarRing}` }} title="Online" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[0.8rem] font-semibold" style={{ color: T.userName }}>Sage</p>
-                    <p className="truncate text-[0.66rem]" style={{ color: T.userEmail }}>kicsworldwide@gmail.com</p>
+                    <p className="truncate text-[0.8rem] font-semibold" style={{ color: T.userName }}>
+                      {authUser?.name ?? '·····'}
+                    </p>
+                    <p className="truncate text-[0.66rem]" style={{ color: T.userEmail }}>
+                      {authUser?.email ?? ''}
+                    </p>
                   </div>
+                  <button
+                    onClick={handleSignOut}
+                    title="Sign out"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors"
+                    style={{ color: T.body }}
+                    onMouseEnter={e => (e.currentTarget.style.background = T.collapseBtnHoverBg)}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"
+                            stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
             </motion.aside>
@@ -2134,8 +2235,8 @@ export function DashboardShell({
             </div>
 
             {/* New campaign */}
-            <motion.a
-              href="/dashboard/campaigns/new"
+            <motion.button
+              onClick={openCreate}
               className="flex h-9 items-center gap-2 rounded-xl px-4 text-[0.8rem] font-semibold"
               style={{
                 background: 'linear-gradient(135deg, #F8C352, #E8960F)',
@@ -2154,7 +2255,7 @@ export function DashboardShell({
                 <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" />
               </svg>
               <span className="hidden sm:inline">New campaign</span>
-            </motion.a>
+            </motion.button>
           </div>
         </header>
 
@@ -2164,7 +2265,7 @@ export function DashboardShell({
           style={{ background: T.contentBg, transition: 'background 0.3s' }}
         >
           <div className="p-4 sm:p-6 lg:p-8">
-            {active === 'overview'      ? <OverviewContent      T={T} /> :
+            {active === 'overview'      ? <OverviewContent      T={T} onNewCampaign={openCreate} /> :
              active === 'campaigns'    ? <CampaignsContent    T={T} /> :
              active === 'testimonials' ? <TestimonialsContent T={T} /> :
              active === 'widgets'      ? <WidgetsContent      T={T} /> :
