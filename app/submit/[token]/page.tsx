@@ -52,6 +52,15 @@ export default async function SubmitPage({ params }: PageProps) {
     }
   }
 
+  // Auto-activate: flip draft → active the first time anyone opens the link
+  if (campaign && campaign.status === 'draft') {
+    await admin
+      .from('campaigns')
+      .update({ status: 'active', updated_at: new Date().toISOString() })
+      .eq('id', campaign.id)
+    campaign = { ...campaign, status: 'active' }
+  }
+
   if (!campaign) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-paper px-6">

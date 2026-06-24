@@ -24,17 +24,43 @@ function CampaignsContent() {
     if (!workspace) return
     setLoading(true)
     const supabase = createClient()
-    const { data } = await supabase
-      .from('campaigns')
-      .select('*, submission_tokens(count), testimonials(count)')
-      .eq('workspace_id', workspace.id)
-      .order('created_at', { ascending: false })
+
+    const [
+      { data: campaignRows },
+      { data: tokenRows },
+      { data: testimonialRows },
+    ] = await Promise.all([
+      supabase
+        .from('campaigns')
+        .select('*')
+        .eq('workspace_id', workspace.id)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('submission_tokens')
+        .select('campaign_id')
+        .eq('workspace_id', workspace.id),
+      supabase
+        .from('testimonials')
+        .select('campaign_id')
+        .eq('workspace_id', workspace.id)
+        .not('campaign_id', 'is', null),
+    ])
+
+    const tokenCounts: Record<string, number> = {}
+    ;(tokenRows ?? []).forEach((t: any) => {
+      if (t.campaign_id) tokenCounts[t.campaign_id] = (tokenCounts[t.campaign_id] ?? 0) + 1
+    })
+
+    const testimonialCounts: Record<string, number> = {}
+    ;(testimonialRows ?? []).forEach((t: any) => {
+      testimonialCounts[t.campaign_id] = (testimonialCounts[t.campaign_id] ?? 0) + 1
+    })
 
     setCampaigns(
-      (data ?? []).map((c: any) => ({
+      (campaignRows ?? []).map((c: any) => ({
         ...c,
-        _tokens:    c.submission_tokens?.[0]?.count ?? 0,
-        _collected: c.testimonials?.[0]?.count ?? 0,
+        _tokens:    tokenCounts[c.id]    ?? 0,
+        _collected: testimonialCounts[c.id] ?? 0,
       })),
     )
     setLoading(false)
@@ -97,14 +123,18 @@ function CampaignsContent() {
           <table className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: `1px solid ${T.tableRowBorder}` }} className="text-left">
-                {['Campaign', 'Status', 'Sent', 'Collected', 'Response rate', 'Share'].map(h => (
+                {['Campaign', 'Status', 'Invites', 'Collected', 'Response rate', 'Share'].map(h => (
                   <th key={h} style={{ color: T.muted }} className="px-6 py-4 font-medium text-xs uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {campaigns.map((c) => {
-                const rate = c._tokens > 0 ? `${Math.round((c._collected / c._tokens) * 100)}%` : '—'
+                const rate = c._tokens > 0
+                  ? `${Math.round((c._collected / c._tokens) * 100)}%`
+                  : c._collected > 0
+                  ? `${c._collected} direct`
+                  : '—'
                 return (
                   <tr
                     key={c.id}
@@ -128,7 +158,11 @@ function CampaignsContent() {
                         {c.status}
                       </span>
                     </td>
-                    <td style={{ color: T.body }} className="px-6 py-4">{c._tokens}</td>
+                    <td style={{ color: T.body }} className="px-6 py-4">
+                      {c._tokens > 0 ? c._tokens : (
+                        <span style={{ color: T.muted }} className="text-xs">Public link</span>
+                      )}
+                    </td>
                     <td style={{ color: T.body }} className="px-6 py-4">{c._collected}</td>
                     <td style={{ color: T.heading }} className="px-6 py-4 font-medium">{rate}</td>
                     <td className="px-6 py-4">
