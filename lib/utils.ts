@@ -23,3 +23,14 @@ export function formatUSD(cents: number): string {
 export function initials(name: string): string {
   return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
 }
+
+export function fmtNow(): string {
+  return new Date().toLocaleString('en-US', {
+    weekday: 'short',
+    month:   'short',
+    day:     'numeric',
+    hour:    'numeric',
+    minute:  '2-digit',
+    hour12:  true,
+  })
+}

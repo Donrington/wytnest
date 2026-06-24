@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { useWorkspace } from '@/lib/hooks/useWorkspace'
 import { createClient } from '@/lib/supabase/client'
-import { initials } from '@/lib/utils'
+import { initials, fmtNow } from '@/lib/utils'
 import { useDashTheme } from '@/lib/hooks/useDashTheme'
 import type { Testimonial } from '@/lib/types/database'
 
@@ -18,6 +18,13 @@ function TestimonialsContent() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
   const [loading, setLoading]         = useState(true)
   const [acting, setActing]           = useState<string | null>(null)
+  const [now, setNow]                 = useState('')
+
+  useEffect(() => {
+    setNow(fmtNow())
+    const id = setInterval(() => setNow(fmtNow()), 60_000)
+    return () => clearInterval(id)
+  }, [])
 
   const load = useCallback(async () => {
     if (!workspace) return
@@ -72,7 +79,20 @@ function TestimonialsContent() {
       <div className="mb-6 flex items-end justify-between">
         <div>
           <h1 style={{ color: T.heading }} className="font-display text-2xl font-extrabold">Testimonials</h1>
-          <p style={{ color: T.body }} className="mt-1">Approve, feature, and organize your social proof.</p>
+          <p style={{ color: T.body }} className="mt-1 flex flex-wrap items-center gap-2">
+            Approve, feature, and organize your social proof.
+            {now && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[0.7rem] font-medium"
+                style={{ background: T.tableRowHoverBg, color: T.muted }}
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+                </svg>
+                {now}
+              </span>
+            )}
+          </p>
         </div>
         {!loading && (
           <span style={{ color: T.muted }} className="text-sm">

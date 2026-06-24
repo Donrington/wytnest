@@ -5,6 +5,7 @@ import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { useWorkspace } from '@/lib/hooks/useWorkspace'
 import { createClient } from '@/lib/supabase/client'
 import { useDashTheme } from '@/lib/hooks/useDashTheme'
+import { fmtNow } from '@/lib/utils'
 import type { Campaign } from '@/lib/types/database'
 
 type CampaignRow = Campaign & {
@@ -19,6 +20,13 @@ function CampaignsContent() {
   const [loading, setLoading]     = useState(true)
   const [copied, setCopied]       = useState<string | null>(null)
   const [hoverRow, setHoverRow]   = useState<string | null>(null)
+  const [now, setNow]             = useState('')
+
+  useEffect(() => {
+    setNow(fmtNow())
+    const id = setInterval(() => setNow(fmtNow()), 60_000)
+    return () => clearInterval(id)
+  }, [])
 
   const load = useCallback(async () => {
     if (!workspace) return
@@ -93,7 +101,20 @@ function CampaignsContent() {
     <>
       <div className="mb-6">
         <h1 style={{ color: T.heading }} className="font-display text-2xl font-extrabold">Campaigns</h1>
-        <p style={{ color: T.body }} className="mt-1">Create collection requests and track responses.</p>
+        <p style={{ color: T.body }} className="mt-1 flex flex-wrap items-center gap-2">
+          Create collection requests and track responses.
+          {now && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[0.7rem] font-medium"
+              style={{ background: T.tableRowHoverBg, color: T.muted }}
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+              </svg>
+              {now}
+            </span>
+          )}
+        </p>
       </div>
 
       {loading ? (
