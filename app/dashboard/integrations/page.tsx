@@ -1,6 +1,7 @@
 'use client'
 
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
+import { useDashTheme } from '@/lib/hooks/useDashTheme'
 
 const INTEGRATIONS = [
   {
@@ -81,51 +82,78 @@ const INTEGRATIONS = [
   },
 ]
 
-export default function IntegrationsPage() {
+function IntegrationsContent() {
+  const { T } = useDashTheme()
+
+  const cardStyle = {
+    background:   T.card,
+    border:       `1px solid ${T.cardBorder}`,
+    boxShadow:    T.cardShadow,
+    borderRadius: '16px',
+  }
+
   return (
-    <DashboardShell active="integrations">
+    <>
       <div className="mb-6">
-        <h1 className="font-display text-2xl font-extrabold text-carbon-900">Integrations</h1>
-        <p className="mt-1 text-carbon-500">Connect Wytnest to your existing stack.</p>
+        <h1 style={{ color: T.heading }} className="font-display text-2xl font-extrabold">Integrations</h1>
+        <p style={{ color: T.body }} className="mt-1">Connect Wytnest to your existing stack.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {INTEGRATIONS.map(intg => (
-          <div key={intg.id} className="flex flex-col gap-4 rounded-2xl border border-paper-border bg-white p-5">
+          <div key={intg.id} style={cardStyle} className="flex flex-col gap-4 p-5">
 
             <div className="flex items-start justify-between gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-                   style={{ background: `${intg.color}18`, color: intg.color }}>
+              <div
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+                style={{ background: `${intg.color}18`, color: intg.color }}
+              >
                 {intg.icon}
               </div>
               {intg.soon ? (
-                <span className="rounded-full bg-carbon-50 px-2 py-0.5 text-xs font-medium text-carbon-400">
+                <span
+                  className="rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{ background: T.tableRowHoverBg, color: T.muted }}
+                >
                   Coming soon
                 </span>
               ) : (
-                <span className="rounded-full bg-ink-50 px-2 py-0.5 text-xs font-medium text-ink-600">
+                <span
+                  className="rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{ background: T.tagSuccessBg, color: T.tagSuccessText }}
+                >
                   Available
                 </span>
               )}
             </div>
 
             <div className="flex-1">
-              <p className="text-sm font-semibold text-carbon-900">{intg.name}</p>
-              <p className="mt-1 text-xs leading-relaxed text-carbon-500">{intg.desc}</p>
+              <p style={{ color: T.heading }} className="text-sm font-semibold">{intg.name}</p>
+              <p style={{ color: T.body }} className="mt-1 text-xs leading-relaxed">{intg.desc}</p>
             </div>
 
             <button
               disabled={intg.soon}
-              className="w-full rounded-xl py-2 text-xs font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-              style={intg.soon
-                ? { background: '#f4f4f5', color: '#9897B3' }
-                : { background: 'linear-gradient(135deg, #4F3FCC, #7B6EF5)', color: '#fff' }}
+              className="w-full rounded-xl py-2 text-xs font-semibold transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+              style={
+                intg.soon
+                  ? { background: T.tableRowHoverBg, color: T.muted }
+                  : { background: 'linear-gradient(135deg, #F8C352, #E8960F)', color: '#080716' }
+              }
             >
               {intg.soon ? 'Notify me' : 'Connect'}
             </button>
           </div>
         ))}
       </div>
+    </>
+  )
+}
+
+export default function IntegrationsPage() {
+  return (
+    <DashboardShell active="integrations">
+      <IntegrationsContent />
     </DashboardShell>
   )
 }

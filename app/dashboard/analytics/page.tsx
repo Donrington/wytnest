@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { useWorkspace } from '@/lib/hooks/useWorkspace'
 import { createClient } from '@/lib/supabase/client'
-import { cn } from '@/lib/utils'
+import { useDashTheme } from '@/lib/hooks/useDashTheme'
 import type { WidgetEvent, Widget } from '@/lib/types/database'
 
 type Range = 7 | 30 | 90
@@ -44,7 +44,8 @@ function chartAxisLabels(count: number, range: number): string[] {
 
 // ── Page ──────────────────────────────────────────────────────
 
-export default function AnalyticsPage() {
+function AnalyticsContent() {
+  const { T } = useDashTheme()
   const { workspace } = useWorkspace()
 
   const [events,       setEvents]       = useState<WidgetEvent[]>([])
@@ -52,6 +53,8 @@ export default function AnalyticsPage() {
   const [range,        setRange]        = useState<Range>(30)
   const [widgetFilter, setWidgetFilter] = useState<string>('all')
   const [loading,      setLoading]      = useState(true)
+  const [hoverBar,     setHoverBar]     = useState<number | null>(null)
+  const [hoverPageRow, setHoverPageRow] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     if (!workspace) return
@@ -134,14 +137,30 @@ export default function AnalyticsPage() {
 
   const noData = !loading && metrics.impressions === 0
 
-  return (
-    <DashboardShell active="analytics">
+  const cardStyle = {
+    background:   T.card,
+    border:       `1px solid ${T.cardBorder}`,
+    boxShadow:    T.cardShadow,
+    borderRadius: '16px',
+  }
 
+  const selectStyle = {
+    background:   T.tableRowHoverBg,
+    border:       `1px solid ${T.cardBorder}`,
+    color:        T.body,
+    borderRadius: '12px',
+    padding:      '8px 12px',
+    fontSize:     '0.875rem',
+    outline:      'none',
+  }
+
+  return (
+    <>
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-extrabold text-carbon-900">Analytics</h1>
-          <p className="mt-1 text-carbon-500">Widget performance across your embedded testimonials.</p>
+          <h1 style={{ color: T.heading }} className="font-display text-2xl font-extrabold">Analytics</h1>
+          <p style={{ color: T.body }} className="mt-1">Widget performance across your embedded testimonials.</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -149,7 +168,7 @@ export default function AnalyticsPage() {
             <select
               value={widgetFilter}
               onChange={e => setWidgetFilter(e.target.value)}
-              className="rounded-xl border border-paper-border bg-white px-3 py-2 text-sm text-carbon-700 outline-none focus:border-ink-600"
+              style={selectStyle}
             >
               <option value="all">All widgets</option>
               {widgets.map(w => (
@@ -158,15 +177,20 @@ export default function AnalyticsPage() {
             </select>
           )}
 
-          <div className="flex rounded-xl border border-paper-border bg-white p-1">
+          <div
+            className="flex rounded-xl p-1"
+            style={{ background: T.tableRowHoverBg, border: `1px solid ${T.cardBorder}` }}
+          >
             {([7, 30, 90] as Range[]).map(r => (
               <button
                 key={r}
                 onClick={() => setRange(r)}
-                className={cn(
-                  'rounded-lg px-3 py-1.5 text-sm font-medium transition-all',
-                  range === r ? 'bg-ink-600 text-white' : 'text-carbon-500 hover:text-carbon-800',
-                )}
+                className="rounded-lg px-3 py-1.5 text-sm font-medium transition-all"
+                style={
+                  range === r
+                    ? { background: 'linear-gradient(135deg, #F8C352, #E8960F)', color: '#080716' }
+                    : { color: T.body }
+                }
               >
                 {r}d
               </button>
@@ -177,7 +201,7 @@ export default function AnalyticsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-24">
-          <svg className="animate-spin h-6 w-6 text-carbon-300" viewBox="0 0 24 24" fill="none">
+          <svg className="animate-spin h-6 w-6" style={{ color: T.muted }} viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="40" strokeDashoffset="15" strokeLinecap="round" />
           </svg>
         </div>
@@ -209,28 +233,37 @@ export default function AnalyticsPage() {
                 sub: 'Widget interactions',
               },
             ].map(s => (
-              <div key={s.label} className="rounded-2xl border border-paper-border bg-white p-5">
-                <p className="text-sm text-carbon-500">{s.label}</p>
-                <p className="mt-2 font-display text-3xl font-extrabold text-carbon-900">{s.value}</p>
-                <p className="mt-1 text-xs text-carbon-400">{s.sub}</p>
+              <div key={s.label} style={cardStyle} className="p-5">
+                <p style={{ color: T.body }} className="text-sm">{s.label}</p>
+                <p style={{ color: T.heading }} className="mt-2 font-display text-3xl font-extrabold">{s.value}</p>
+                <p style={{ color: T.muted }} className="mt-1 text-xs">{s.sub}</p>
               </div>
             ))}
           </div>
 
           {/* Empty state */}
           {noData && (
-            <div className="mb-6 rounded-2xl border border-dashed border-paper-border bg-paper p-12 text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-ink-50">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-ink-600">
+            <div
+              className="mb-6 p-12 text-center"
+              style={{ ...cardStyle, borderStyle: 'dashed' }}
+            >
+              <div
+                className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full"
+                style={{ background: T.tableRowHoverBg }}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: T.body }}>
                   <path d="M3 3v18h18" /><path d="M18 17V9M13 17V5M8 17v-3" />
                 </svg>
               </div>
-              <p className="font-semibold text-carbon-700">No events recorded yet</p>
-              <p className="mt-1 text-sm text-carbon-400">
+              <p style={{ color: T.heading }} className="font-semibold">No events recorded yet</p>
+              <p style={{ color: T.body }} className="mt-1 text-sm">
                 Embed your widget on a live page and visitor events will show up here.
               </p>
-              <a href="/dashboard/widgets"
-                className="mt-3 inline-block text-sm font-medium text-ink-600 hover:text-ink-800">
+              <a
+                href="/dashboard/widgets"
+                style={{ color: '#7B6EF5' }}
+                className="mt-3 inline-block text-sm font-medium transition-opacity hover:opacity-70"
+              >
                 Go to widget builder →
               </a>
             </div>
@@ -238,11 +271,11 @@ export default function AnalyticsPage() {
 
           {/* Impressions chart */}
           {!noData && (
-            <div className="mb-6 rounded-2xl border border-paper-border bg-white p-6">
-              <h2 className="mb-6 font-semibold text-carbon-900">
+            <div style={cardStyle} className="mb-6 p-6">
+              <h2 style={{ color: T.heading }} className="mb-6 font-semibold">
                 Impressions per day
                 {widgetFilter !== 'all' && (
-                  <span className="ml-2 text-sm font-normal text-carbon-400">
+                  <span style={{ color: T.body }} className="ml-2 text-sm font-normal">
                     · {widgets.find(w => w.id === widgetFilter)?.name}
                   </span>
                 )}
@@ -250,13 +283,24 @@ export default function AnalyticsPage() {
 
               <div className="flex h-48 items-end gap-px">
                 {daily.map((d, i) => (
-                  <div key={i} className="group relative flex flex-1 flex-col items-center justify-end">
+                  <div
+                    key={i}
+                    className="group relative flex flex-1 flex-col items-center justify-end"
+                    onMouseEnter={() => setHoverBar(i)}
+                    onMouseLeave={() => setHoverBar(null)}
+                  >
                     <div
-                      className="w-full min-h-[2px] rounded-t-sm bg-ink-200 transition-colors group-hover:bg-ink-600"
-                      style={{ height: `${Math.max(d.count > 0 ? (d.count / maxDaily) * 100 : 0, d.count > 0 ? 2 : 0)}%` }}
+                      className="w-full min-h-[2px] rounded-t-sm transition-colors"
+                      style={{
+                        height: `${Math.max(d.count > 0 ? (d.count / maxDaily) * 100 : 0, d.count > 0 ? 2 : 0)}%`,
+                        background: hoverBar === i ? '#E8960F' : T.cardBorder,
+                      }}
                     />
-                    {d.count > 0 && (
-                      <div className="pointer-events-none absolute -top-7 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-carbon-900 px-2 py-0.5 text-xs text-white group-hover:block">
+                    {d.count > 0 && hoverBar === i && (
+                      <div
+                        className="pointer-events-none absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-0.5 text-xs"
+                        style={{ background: T.heading, color: T.card }}
+                      >
                         {d.count}
                       </div>
                     )}
@@ -265,7 +309,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* X-axis labels */}
-              <div className="mt-2 flex justify-between text-xs text-carbon-400">
+              <div className="mt-2 flex justify-between text-xs" style={{ color: T.muted }}>
                 {axisLabels.map((label, i) => (
                   <span key={i}>{label}</span>
                 ))}
@@ -275,23 +319,38 @@ export default function AnalyticsPage() {
 
           {/* Top pages */}
           {topPages.length > 0 && (
-            <div className="rounded-2xl border border-paper-border bg-white">
-              <div className="border-b border-paper-border px-6 py-4">
-                <h2 className="font-semibold text-carbon-900">Top pages by impressions</h2>
+            <div style={cardStyle}>
+              <div style={{ borderBottom: `1px solid ${T.tableRowBorder}` }} className="px-6 py-4">
+                <h2 style={{ color: T.heading }} className="font-semibold">Top pages by impressions</h2>
               </div>
-              <div className="divide-y divide-paper-border">
+              <div>
                 {topPages.map(({ url, count }) => (
-                  <div key={url} className="flex items-center gap-4 px-6 py-3">
-                    <span className="min-w-0 flex-1 truncate text-sm text-carbon-700" title={url}>
+                  <div
+                    key={url}
+                    className="flex items-center gap-4 px-6 py-3 transition-colors"
+                    style={{
+                      borderBottom: `1px solid ${T.tableRowBorder}`,
+                      background: hoverPageRow === url ? T.tableRowHoverBg : 'transparent',
+                    }}
+                    onMouseEnter={() => setHoverPageRow(url)}
+                    onMouseLeave={() => setHoverPageRow(null)}
+                  >
+                    <span style={{ color: T.body }} className="min-w-0 flex-1 truncate text-sm" title={url}>
                       {shortUrl(url)}
                     </span>
-                    <span className="shrink-0 text-sm font-semibold tabular-nums text-carbon-900">
+                    <span style={{ color: T.heading }} className="shrink-0 text-sm font-semibold tabular-nums">
                       {fmt(count)}
                     </span>
-                    <div className="w-24 shrink-0 overflow-hidden rounded-full bg-paper-border" style={{ height: 6 }}>
+                    <div
+                      className="w-24 shrink-0 overflow-hidden rounded-full"
+                      style={{ height: 6, background: T.tableRowHoverBg }}
+                    >
                       <div
-                        className="h-full rounded-full bg-ink-600"
-                        style={{ width: `${Math.round((count / topPages[0].count) * 100)}%` }}
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${Math.round((count / topPages[0].count) * 100)}%`,
+                          background: 'linear-gradient(135deg, #F8C352, #E8960F)',
+                        }}
                       />
                     </div>
                   </div>
@@ -301,6 +360,14 @@ export default function AnalyticsPage() {
           )}
         </>
       )}
+    </>
+  )
+}
+
+export default function AnalyticsPage() {
+  return (
+    <DashboardShell active="analytics">
+      <AnalyticsContent />
     </DashboardShell>
   )
 }

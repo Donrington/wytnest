@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { useWorkspace } from '@/lib/hooks/useWorkspace'
 import { createClient } from '@/lib/supabase/client'
+import { useDashTheme } from '@/lib/hooks/useDashTheme'
 import type { Campaign } from '@/lib/types/database'
 
 type CampaignRow = Campaign & {
@@ -11,18 +12,13 @@ type CampaignRow = Campaign & {
   _collected: number
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  active:   'bg-emerald-50 text-emerald-700',
-  draft:    'bg-carbon-100 text-carbon-600',
-  paused:   'bg-gold-50 text-gold-800',
-  archived: 'bg-red-50 text-red-600',
-}
-
-export default function CampaignsPage() {
+function CampaignsContent() {
+  const { T } = useDashTheme()
   const { workspace } = useWorkspace()
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([])
   const [loading, setLoading]     = useState(true)
   const [copied, setCopied]       = useState<string | null>(null)
+  const [hoverRow, setHoverRow]   = useState<string | null>(null)
 
   const load = useCallback(async () => {
     if (!workspace) return
@@ -53,67 +49,101 @@ export default function CampaignsPage() {
     setTimeout(() => setCopied(null), 2000)
   }
 
+  const cardStyle = {
+    background:   T.card,
+    border:       `1px solid ${T.cardBorder}`,
+    boxShadow:    T.cardShadow,
+    borderRadius: '16px',
+  }
+
+  const statusTag = (status: string) => {
+    if (status === 'active')   return { background: T.tagSuccessBg,  color: T.tagSuccessText }
+    if (status === 'paused')   return { background: T.tagPendingBg,  color: T.tagPendingText }
+    if (status === 'archived') return { background: 'rgba(239,68,68,0.12)', color: '#F87171' }
+    return { background: T.tableRowHoverBg, color: T.muted }
+  }
+
   return (
-    <DashboardShell active="campaigns">
+    <>
       <div className="mb-6">
-        <h1 className="font-display text-2xl font-extrabold text-carbon-900">Campaigns</h1>
-        <p className="mt-1 text-carbon-500">Create collection requests and track responses.</p>
+        <h1 style={{ color: T.heading }} className="font-display text-2xl font-extrabold">Campaigns</h1>
+        <p style={{ color: T.body }} className="mt-1">Create collection requests and track responses.</p>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-24">
-          <svg className="animate-spin h-6 w-6 text-carbon-300" viewBox="0 0 24 24" fill="none">
+          <svg className="animate-spin h-6 w-6" style={{ color: T.muted }} viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="40" strokeDashoffset="15" strokeLinecap="round" />
           </svg>
         </div>
       ) : campaigns.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-paper-border py-20 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-carbon-50">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="text-carbon-400">
+        <div
+          className="flex flex-col items-center justify-center py-20 text-center"
+          style={{ ...cardStyle, borderStyle: 'dashed' }}
+        >
+          <div
+            className="mb-4 flex h-14 w-14 items-center justify-center rounded-full"
+            style={{ background: T.tableRowHoverBg }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" style={{ color: T.muted }}>
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
             </svg>
           </div>
-          <p className="font-semibold text-carbon-700">No campaigns yet</p>
-          <p className="mt-1 text-sm text-carbon-400">Create one with the button above to start collecting testimonials.</p>
+          <p style={{ color: T.heading }} className="font-semibold">No campaigns yet</p>
+          <p style={{ color: T.body }} className="mt-1 text-sm">Create one with the button above to start collecting testimonials.</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-paper-border bg-white">
+        <div style={cardStyle} className="overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-paper-border text-left text-xs uppercase tracking-wide text-carbon-400">
-                <th className="px-6 py-4 font-medium">Campaign</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium">Sent</th>
-                <th className="px-6 py-4 font-medium">Collected</th>
-                <th className="px-6 py-4 font-medium">Response rate</th>
-                <th className="px-6 py-4 font-medium">Share</th>
+              <tr style={{ borderBottom: `1px solid ${T.tableRowBorder}` }} className="text-left">
+                {['Campaign', 'Status', 'Sent', 'Collected', 'Response rate', 'Share'].map(h => (
+                  <th key={h} style={{ color: T.muted }} className="px-6 py-4 font-medium text-xs uppercase tracking-wide">{h}</th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-paper-border">
+            <tbody>
               {campaigns.map((c) => {
                 const rate = c._tokens > 0 ? `${Math.round((c._collected / c._tokens) * 100)}%` : '—'
                 return (
-                  <tr key={c.id} className="transition-colors hover:bg-carbon-50/50">
+                  <tr
+                    key={c.id}
+                    style={{
+                      borderBottom: `1px solid ${T.tableRowBorder}`,
+                      background: hoverRow === c.id ? T.tableRowHoverBg : 'transparent',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={() => setHoverRow(c.id)}
+                    onMouseLeave={() => setHoverRow(null)}
+                  >
                     <td className="px-6 py-4">
-                      <p className="font-medium text-carbon-900">{c.name}</p>
-                      <p className="mt-0.5 font-mono text-[0.68rem] text-carbon-400">/submit/{c.slug}</p>
+                      <p style={{ color: T.heading }} className="font-medium">{c.name}</p>
+                      <p style={{ color: T.muted }} className="mt-0.5 font-mono text-[0.68rem]">/submit/{c.slug}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${STATUS_STYLES[c.status] ?? ''}`}>
+                      <span
+                        className="rounded-full px-2.5 py-1 text-xs font-medium capitalize"
+                        style={statusTag(c.status)}
+                      >
                         {c.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-carbon-600">{c._tokens}</td>
-                    <td className="px-6 py-4 text-carbon-600">{c._collected}</td>
-                    <td className="px-6 py-4 font-medium text-carbon-900">{rate}</td>
+                    <td style={{ color: T.body }} className="px-6 py-4">{c._tokens}</td>
+                    <td style={{ color: T.body }} className="px-6 py-4">{c._collected}</td>
+                    <td style={{ color: T.heading }} className="px-6 py-4 font-medium">{rate}</td>
                     <td className="px-6 py-4">
                       <button
                         onClick={() => copyLink(c)}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-paper-border bg-white px-3 py-1.5 text-xs font-medium text-carbon-700 transition-all hover:border-ink-400 hover:text-ink-700"
+                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-75"
+                        style={{
+                          background: T.tableRowHoverBg,
+                          border:     `1px solid ${T.cardBorder}`,
+                          color:      T.body,
+                        }}
                       >
                         {copied === c.id ? (
                           <>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className="text-emerald-500">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ color: T.tagSuccessText }}>
                               <path d="M20 6L9 17l-5-5" />
                             </svg>
                             Copied!
@@ -136,6 +166,14 @@ export default function CampaignsPage() {
           </table>
         </div>
       )}
+    </>
+  )
+}
+
+export default function CampaignsPage() {
+  return (
+    <DashboardShell active="campaigns">
+      <CampaignsContent />
     </DashboardShell>
   )
 }

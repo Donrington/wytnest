@@ -6,7 +6,7 @@ import { BentoWall } from '@/components/widgets/BentoWall'
 import { CinematicSlider, Ticker } from '@/components/widgets/Ticker'
 import { useWorkspace } from '@/lib/hooks/useWorkspace'
 import { createClient } from '@/lib/supabase/client'
-import { cn } from '@/lib/utils'
+import { useDashTheme } from '@/lib/hooks/useDashTheme'
 import type { Widget, WidgetLayout } from '@/lib/types/database'
 
 const LAYOUTS: { id: WidgetLayout; label: string; desc: string }[] = [
@@ -17,7 +17,8 @@ const LAYOUTS: { id: WidgetLayout; label: string; desc: string }[] = [
 
 const ACCENTS = ['#4F3FCC', '#E8960F', '#16A660', '#D4537E']
 
-export default function WidgetsPage() {
+function WidgetsContent() {
+  const { T } = useDashTheme()
   const { workspace } = useWorkspace()
 
   const [widgets,  setWidgets]  = useState<Widget[]>([])
@@ -106,16 +107,35 @@ export default function WidgetsPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const cardStyle = {
+    background:   T.card,
+    border:       `1px solid ${T.cardBorder}`,
+    boxShadow:    T.cardShadow,
+    borderRadius: '16px',
+  }
+
+  const inputStyle = {
+    background: T.tableRowHoverBg,
+    border:     `1px solid ${T.cardBorder}`,
+    color:      T.heading,
+    borderRadius: '12px',
+    outline:    'none',
+    width:      '100%',
+    padding:    '10px 14px',
+    fontSize:   '0.875rem',
+  }
+
   return (
-    <DashboardShell active="widgets">
+    <>
       <div className="mb-6 flex items-end justify-between">
         <div>
-          <h1 className="font-display text-2xl font-extrabold text-carbon-900">Widget builder</h1>
-          <p className="mt-1 text-carbon-500">Customize your widget and grab the embed code.</p>
+          <h1 style={{ color: T.heading }} className="font-display text-2xl font-extrabold">Widget builder</h1>
+          <p style={{ color: T.body }} className="mt-1">Customize your widget and grab the embed code.</p>
         </div>
         <button
           onClick={() => { setCreating(true); setNewName('') }}
-          className="inline-flex items-center gap-2 rounded-full border border-paper-border bg-white px-4 py-2 text-sm font-medium text-carbon-700 transition-all hover:border-ink-400 hover:text-ink-700"
+          className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-opacity hover:opacity-75"
+          style={{ background: T.tableRowHoverBg, border: `1px solid ${T.cardBorder}`, color: T.body }}
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
           New widget
@@ -124,7 +144,10 @@ export default function WidgetsPage() {
 
       {/* New widget name dialog */}
       {creating && (
-        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-ink-200 bg-ink-50/50 p-4">
+        <div
+          className="mb-6 flex items-center gap-3 p-4"
+          style={cardStyle}
+        >
           <input
             autoFocus
             type="text"
@@ -132,13 +155,21 @@ export default function WidgetsPage() {
             onChange={e => setNewName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') create(); if (e.key === 'Escape') setCreating(false) }}
             placeholder="Widget name (e.g. Homepage hero)"
-            className="flex-1 rounded-xl border border-paper-border bg-white px-4 py-2.5 text-sm text-carbon-900 outline-none placeholder:text-carbon-300 focus:border-ink-600 focus:ring-2 focus:ring-ink-600/10"
+            style={{ ...inputStyle, flex: 1 }}
           />
-          <button onClick={create} disabled={!newName.trim() || saving}
-            className="rounded-xl bg-ink-600 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-40">
+          <button
+            onClick={create}
+            disabled={!newName.trim() || saving}
+            className="rounded-xl px-4 py-2.5 text-sm font-semibold disabled:opacity-40"
+            style={{ background: 'linear-gradient(135deg, #F8C352, #E8960F)', color: '#080716' }}
+          >
             {saving ? '…' : 'Create'}
           </button>
-          <button onClick={() => setCreating(false)} className="rounded-xl border border-paper-border bg-white px-4 py-2.5 text-sm font-medium text-carbon-600">
+          <button
+            onClick={() => setCreating(false)}
+            className="rounded-xl px-4 py-2.5 text-sm font-medium transition-opacity hover:opacity-70"
+            style={{ background: T.tableRowHoverBg, border: `1px solid ${T.cardBorder}`, color: T.body }}
+          >
             Cancel
           </button>
         </div>
@@ -146,14 +177,17 @@ export default function WidgetsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-24">
-          <svg className="animate-spin h-6 w-6 text-carbon-300" viewBox="0 0 24 24" fill="none">
+          <svg className="animate-spin h-6 w-6" style={{ color: T.muted }} viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="40" strokeDashoffset="15" strokeLinecap="round" />
           </svg>
         </div>
       ) : widgets.length === 0 && !creating ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-paper-border py-20 text-center">
-          <p className="font-semibold text-carbon-700">No widgets yet</p>
-          <p className="mt-1 text-sm text-carbon-400">Click "New widget" above to create your first embed.</p>
+        <div
+          className="flex flex-col items-center justify-center py-20 text-center"
+          style={{ ...cardStyle, borderStyle: 'dashed' }}
+        >
+          <p style={{ color: T.heading }} className="font-semibold">No widgets yet</p>
+          <p style={{ color: T.body }} className="mt-1 text-sm">Click &ldquo;New widget&rdquo; above to create your first embed.</p>
         </div>
       ) : selected ? (
         <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
@@ -167,10 +201,12 @@ export default function WidgetsPage() {
                   <button
                     key={w.id}
                     onClick={() => pick(w)}
-                    className={cn(
-                      'w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all',
-                      selected.id === w.id ? 'bg-ink-50 text-ink-700 border border-ink-200' : 'text-carbon-600 hover:bg-carbon-50',
-                    )}
+                    className="w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all"
+                    style={
+                      selected.id === w.id
+                        ? { background: 'linear-gradient(135deg, #F8C352, #E8960F)', color: '#080716' }
+                        : { background: T.tableRowHoverBg, color: T.body }
+                    }
                   >
                     {w.name}
                   </button>
@@ -179,84 +215,106 @@ export default function WidgetsPage() {
             )}
 
             {/* Name */}
-            <div className="rounded-2xl border border-paper-border bg-white p-5">
-              <label className="mb-2 block text-xs font-medium text-carbon-500">Widget name</label>
+            <div style={cardStyle} className="p-5">
+              <label style={{ color: T.muted }} className="mb-2 block text-xs font-medium">Widget name</label>
               <input
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                className="w-full rounded-xl border border-paper-border bg-paper px-3 py-2.5 text-sm text-carbon-900 outline-none focus:border-ink-600 focus:ring-2 focus:ring-ink-600/10"
+                style={inputStyle}
               />
             </div>
 
             {/* Layout */}
-            <div className="rounded-2xl border border-paper-border bg-white p-5">
-              <h3 className="mb-3 text-sm font-semibold text-carbon-900">Layout</h3>
+            <div style={cardStyle} className="p-5">
+              <h3 style={{ color: T.heading }} className="mb-3 text-sm font-semibold">Layout</h3>
               <div className="space-y-2">
                 {LAYOUTS.map(l => (
                   <button
                     key={l.id}
                     onClick={() => setLayout(l.id)}
-                    className={cn(
-                      'w-full rounded-xl border px-4 py-3 text-left transition-all',
-                      layout === l.id ? 'border-ink-600 bg-ink-50' : 'border-paper-border hover:border-carbon-300',
-                    )}
+                    className="w-full rounded-xl px-4 py-3 text-left transition-all"
+                    style={
+                      layout === l.id
+                        ? { border: `1px solid #E8960F`, background: 'rgba(232,150,15,0.08)' }
+                        : { border: `1px solid ${T.cardBorder}`, background: 'transparent' }
+                    }
                   >
-                    <p className={cn('text-sm font-medium', layout === l.id ? 'text-ink-700' : 'text-carbon-700')}>{l.label}</p>
-                    <p className="text-xs text-carbon-400">{l.desc}</p>
+                    <p style={{ color: layout === l.id ? '#E8960F' : T.heading }} className="text-sm font-medium">{l.label}</p>
+                    <p style={{ color: T.muted }} className="text-xs">{l.desc}</p>
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Appearance */}
-            <div className="rounded-2xl border border-paper-border bg-white p-5">
-              <h3 className="mb-3 text-sm font-semibold text-carbon-900">Appearance</h3>
-              <label className="mb-2 block text-xs font-medium text-carbon-500">Theme</label>
+            <div style={cardStyle} className="p-5">
+              <h3 style={{ color: T.heading }} className="mb-3 text-sm font-semibold">Appearance</h3>
+              <label style={{ color: T.muted }} className="mb-2 block text-xs font-medium">Theme</label>
               <div className="mb-4 flex gap-2">
                 {(['light', 'dark'] as const).map(th => (
-                  <button key={th} onClick={() => setTheme(th)}
-                    className={cn('flex-1 rounded-lg border py-2 text-sm capitalize transition-all',
-                      theme === th ? 'border-ink-600 bg-ink-50 text-ink-700' : 'border-paper-border text-carbon-600')}>
+                  <button
+                    key={th}
+                    onClick={() => setTheme(th)}
+                    className="flex-1 rounded-lg py-2 text-sm capitalize transition-all"
+                    style={
+                      theme === th
+                        ? { border: `1px solid #E8960F`, background: 'rgba(232,150,15,0.08)', color: '#E8960F' }
+                        : { border: `1px solid ${T.cardBorder}`, color: T.body }
+                    }
+                  >
                     {th}
                   </button>
                 ))}
               </div>
 
-              <label className="mb-2 block text-xs font-medium text-carbon-500">Accent color</label>
+              <label style={{ color: T.muted }} className="mb-2 block text-xs font-medium">Accent color</label>
               <div className="mb-4 flex gap-2">
                 {ACCENTS.map(c => (
-                  <button key={c} onClick={() => setAccent(c)}
-                    className={cn('h-9 w-9 rounded-lg transition-all', accent === c && 'ring-2 ring-offset-2 ring-ink-600')}
-                    style={{ background: c }} aria-label={c} />
+                  <button
+                    key={c}
+                    onClick={() => setAccent(c)}
+                    className="h-9 w-9 rounded-lg transition-all"
+                    style={{
+                      background: c,
+                      outline: accent === c ? `2px solid ${T.heading}` : 'none',
+                      outlineOffset: '2px',
+                    }}
+                    aria-label={c}
+                  />
                 ))}
               </div>
 
-              <label className="mb-2 block text-xs font-medium text-carbon-500">Border radius — {radius}px</label>
-              <input type="range" min={0} max={24} value={radius} onChange={e => setRadius(+e.target.value)} className="w-full accent-ink-600" />
+              <label style={{ color: T.muted }} className="mb-2 block text-xs font-medium">Border radius — {radius}px</label>
+              <input type="range" min={0} max={24} value={radius} onChange={e => setRadius(+e.target.value)} className="w-full" style={{ accentColor: '#E8960F' }} />
             </div>
 
             {/* Save */}
             <button
               onClick={save}
               disabled={saving}
-              className="w-full rounded-full bg-ink-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-ink-800 disabled:opacity-50"
+              className="w-full rounded-full py-3 text-sm font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg, #F8C352, #E8960F)', color: '#080716' }}
             >
               {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save widget'}
             </button>
 
             {/* Embed code */}
-            <div className="rounded-2xl border border-carbon-800 bg-carbon-950 p-4">
+            <div
+              className="rounded-2xl p-4"
+              style={{ background: 'rgba(8,7,16,0.85)', border: '1px solid rgba(255,255,255,0.08)' }}
+            >
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs font-medium text-carbon-400">Embed code</p>
-                <span className="font-mono text-[0.62rem] text-carbon-600">ID: {selected.public_id}</span>
+                <p className="text-xs font-medium" style={{ color: '#6F6C92' }}>Embed code</p>
+                <span className="font-mono text-[0.62rem]" style={{ color: '#3E3B61' }}>ID: {selected.public_id}</span>
               </div>
-              <code className="block break-all font-mono text-[0.7rem] leading-relaxed text-carbon-200">
+              <code className="block break-all font-mono text-[0.7rem] leading-relaxed" style={{ color: '#B8B5D4' }}>
                 {`<script src="${typeof window !== 'undefined' ? window.location.origin : 'https://wytnest.com'}/embed.js" data-widget="${selected.public_id}" async></script>`}
               </code>
               <button
                 onClick={copyEmbed}
-                className="mt-3 w-full rounded-lg bg-white/10 py-2 text-xs font-medium text-white transition-colors hover:bg-white/15"
+                className="mt-3 w-full rounded-lg py-2 text-xs font-medium transition-opacity hover:opacity-80"
+                style={{ background: 'rgba(255,255,255,0.08)', color: '#E4E3F0' }}
               >
                 {copied ? '✓ Copied!' : 'Copy embed code'}
               </button>
@@ -264,9 +322,16 @@ export default function WidgetsPage() {
           </div>
 
           {/* Live preview */}
-          <div className={cn('min-h-[420px] rounded-2xl border p-6', theme === 'dark' ? 'border-white/8 bg-carbon-900' : 'border-paper-border bg-paper-surface')}>
+          <div
+            className="min-h-[420px] rounded-2xl p-6"
+            style={
+              theme === 'dark'
+                ? { background: '#0B0919', border: '1px solid rgba(255,255,255,0.07)', boxShadow: T.cardShadow }
+                : { background: '#F8F7FF', border: `1px solid ${T.cardBorder}`, boxShadow: T.cardShadow }
+            }
+          >
             <div className="mb-4 flex items-center gap-2">
-              <span className={cn('text-xs font-medium', theme === 'dark' ? 'text-carbon-400' : 'text-carbon-500')}>
+              <span className="text-xs font-medium" style={{ color: theme === 'dark' ? '#6F6C92' : T.body }}>
                 Live preview · {LAYOUTS.find(l => l.id === layout)?.label}
               </span>
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
@@ -277,6 +342,14 @@ export default function WidgetsPage() {
           </div>
         </div>
       ) : null}
+    </>
+  )
+}
+
+export default function WidgetsPage() {
+  return (
+    <DashboardShell active="widgets">
+      <WidgetsContent />
     </DashboardShell>
   )
 }

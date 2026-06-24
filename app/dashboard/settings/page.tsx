@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { useWorkspace } from '@/lib/hooks/useWorkspace'
 import { createClient } from '@/lib/supabase/client'
+import { useDashTheme } from '@/lib/hooks/useDashTheme'
+import type { Theme } from '@/lib/hooks/useDashTheme'
 
 function Field({
-  label, value, onChange, type = 'text', hint, readOnly,
+  label, value, onChange, type = 'text', hint, readOnly, T,
 }: {
   label: string
   value: string
@@ -14,34 +16,54 @@ function Field({
   type?: string
   hint?: string
   readOnly?: boolean
+  T: Theme
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium text-carbon-500">{label}</label>
+      <label style={{ color: T.muted }} className="text-xs font-medium">{label}</label>
       <input
         type={type}
         value={value}
         readOnly={readOnly}
         onChange={e => onChange?.(e.target.value)}
-        className="w-full rounded-xl border border-paper-border bg-paper px-4 py-2.5 text-sm text-carbon-900 outline-none placeholder:text-carbon-300 focus:border-ink-600 focus:ring-2 focus:ring-ink-600/10 read-only:cursor-not-allowed read-only:opacity-60"
+        className="read-only:cursor-not-allowed read-only:opacity-60"
+        style={{
+          background:   T.tableRowHoverBg,
+          border:       `1px solid ${T.cardBorder}`,
+          color:        T.heading,
+          borderRadius: '12px',
+          padding:      '10px 14px',
+          fontSize:     '0.875rem',
+          outline:      'none',
+          width:        '100%',
+        }}
       />
-      {hint && <p className="text-xs text-carbon-400">{hint}</p>}
+      {hint && <p style={{ color: T.muted }} className="text-xs">{hint}</p>}
     </div>
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, T }: { title: string; children: React.ReactNode; T: Theme }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-paper-border bg-white">
-      <div className="border-b border-paper-border px-6 py-4">
-        <p className="text-sm font-semibold text-carbon-900">{title}</p>
+    <div
+      style={{
+        background:   T.card,
+        border:       `1px solid ${T.cardBorder}`,
+        boxShadow:    T.cardShadow,
+        borderRadius: '16px',
+        overflow:     'hidden',
+      }}
+    >
+      <div style={{ borderBottom: `1px solid ${T.tableRowBorder}` }} className="px-6 py-4">
+        <p style={{ color: T.heading }} className="text-sm font-semibold">{title}</p>
       </div>
       <div className="flex flex-col gap-5 p-6">{children}</div>
     </div>
   )
 }
 
-export default function SettingsPage() {
+function SettingsContent() {
+  const { T } = useDashTheme()
   const { workspace } = useWorkspace()
 
   const [name,       setName]       = useState('')
@@ -97,83 +119,104 @@ export default function SettingsPage() {
   const initials = name.split(' ').slice(0, 2).map(n => n[0] || '').join('').toUpperCase() || '??'
 
   return (
-    <DashboardShell active="settings">
+    <>
       <div className="mb-6">
-        <h1 className="font-display text-2xl font-extrabold text-carbon-900">Settings</h1>
-        <p className="mt-1 text-carbon-500">Manage your account, brand, and workspace preferences.</p>
+        <h1 style={{ color: T.heading }} className="font-display text-2xl font-extrabold">Settings</h1>
+        <p style={{ color: T.body }} className="mt-1">Manage your account, brand, and workspace preferences.</p>
       </div>
 
       <div className="flex max-w-2xl flex-col gap-6">
 
         {/* Profile */}
-        <Section title="Profile">
+        <Section title="Profile" T={T}>
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-[0.9rem] font-bold text-white"
-                 style={{ background: 'linear-gradient(135deg, #4F3FCC, #7B6EF5)' }}>
+            <div
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-[0.9rem] font-bold text-white"
+              style={{ background: 'linear-gradient(135deg, #4F3FCC, #7B6EF5)' }}
+            >
               {initials}
             </div>
             <div>
-              <p className="text-sm font-medium text-carbon-900">Profile photo</p>
-              <p className="text-xs text-carbon-500">Update your avatar in your Supabase account.</p>
+              <p style={{ color: T.heading }} className="text-sm font-medium">Profile photo</p>
+              <p style={{ color: T.body }} className="text-xs">Update your avatar in your Supabase account.</p>
             </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Full name" value={name} onChange={setName} />
-            <Field label="Email address" value={email} readOnly hint="Email cannot be changed here." type="email" />
+            <Field label="Full name" value={name} onChange={setName} T={T} />
+            <Field label="Email address" value={email} readOnly hint="Email cannot be changed here." type="email" T={T} />
           </div>
         </Section>
 
         {/* Brand */}
-        <Section title="Workspace & brand">
+        <Section title="Workspace & brand" T={T}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
               label="Workspace name"
               value={brandName}
               onChange={setBrandName}
               hint="Shown in campaign emails and widget footers."
+              T={T}
             />
             <Field
               label="Workspace slug"
               value={workspace?.slug ?? ''}
               readOnly
               hint="Used in submission URLs. Contact support to change."
+              T={T}
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-carbon-500">Brand color</label>
+            <label style={{ color: T.muted }} className="text-xs font-medium">Brand color</label>
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl border border-paper-border" style={{ background: brandColor }} />
+              <div
+                className="h-9 w-9 rounded-xl"
+                style={{ background: brandColor, border: `1px solid ${T.cardBorder}` }}
+              />
               <input
                 type="text"
                 value={brandColor}
                 onChange={e => setBrandColor(e.target.value)}
                 placeholder="#4F3FCC"
-                className="w-32 rounded-xl border border-paper-border bg-paper px-3 py-2.5 font-mono text-sm text-carbon-900 outline-none focus:border-ink-600 focus:ring-2 focus:ring-ink-600/10"
+                className="w-32"
+                style={{
+                  background:   T.tableRowHoverBg,
+                  border:       `1px solid ${T.cardBorder}`,
+                  color:        T.heading,
+                  borderRadius: '12px',
+                  padding:      '8px 12px',
+                  fontFamily:   'monospace',
+                  fontSize:     '0.875rem',
+                  outline:      'none',
+                }}
               />
               <input
                 type="color"
                 value={brandColor}
                 onChange={e => setBrandColor(e.target.value)}
-                className="h-9 w-9 cursor-pointer rounded-lg border border-paper-border bg-transparent"
+                className="h-9 w-9 cursor-pointer rounded-lg"
+                style={{ border: `1px solid ${T.cardBorder}`, background: 'transparent' }}
               />
             </div>
           </div>
         </Section>
 
         {/* Plan */}
-        <Section title="Plan & billing">
+        <Section title="Plan & billing" T={T}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold capitalize text-carbon-900">{workspace?.plan ?? 'Free'} plan</p>
-              <p className="mt-0.5 text-xs text-carbon-500">
+              <p style={{ color: T.heading }} className="text-sm font-semibold capitalize">{workspace?.plan ?? 'Free'} plan</p>
+              <p style={{ color: T.body }} className="mt-0.5 text-xs">
                 {workspace?.plan === 'agency'
                   ? 'Unlimited campaigns, widgets, and team members.'
                   : 'Upgrade to unlock more campaigns, widgets, and team features.'}
               </p>
             </div>
             {workspace?.plan !== 'agency' && (
-              <a href="/dashboard/billing"
-                className="shrink-0 rounded-full bg-ink-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-ink-800">
+              <a
+                href="/dashboard/billing"
+                className="shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
+                style={{ background: 'linear-gradient(135deg, #F8C352, #E8960F)', color: '#080716' }}
+              >
                 Upgrade
               </a>
             )}
@@ -181,7 +224,7 @@ export default function SettingsPage() {
         </Section>
 
         {/* Notifications */}
-        <Section title="Email notifications">
+        <Section title="Email notifications" T={T}>
           {[
             { label: 'New testimonial received',     sub: 'Email when a campaign collects a new response' },
             { label: 'Testimonial pending approval', sub: 'Email when a response needs your review'       },
@@ -189,10 +232,13 @@ export default function SettingsPage() {
           ].map((n, i) => (
             <div key={i} className="flex items-start justify-between gap-4 sm:items-center">
               <div>
-                <p className="text-sm font-medium text-carbon-900">{n.label}</p>
-                <p className="text-xs text-carbon-500">{n.sub}</p>
+                <p style={{ color: T.heading }} className="text-sm font-medium">{n.label}</p>
+                <p style={{ color: T.body }} className="text-xs">{n.sub}</p>
               </div>
-              <span className="shrink-0 rounded-full bg-carbon-100 px-2.5 py-0.5 text-xs text-carbon-500">
+              <span
+                className="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                style={{ background: T.tableRowHoverBg, color: T.muted }}
+              >
                 Coming soon
               </span>
             </div>
@@ -200,16 +246,17 @@ export default function SettingsPage() {
         </Section>
 
         {/* Danger zone */}
-        <Section title="Danger zone">
+        <Section title="Danger zone" T={T}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-medium text-carbon-900">Delete workspace</p>
-              <p className="text-xs text-carbon-500">
+              <p style={{ color: T.heading }} className="text-sm font-medium">Delete workspace</p>
+              <p style={{ color: T.body }} className="text-xs">
                 Permanently removes all campaigns, testimonials, and widgets. Irreversible.
               </p>
             </div>
             <button
-              className="shrink-0 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition-opacity hover:opacity-80"
+              className="shrink-0 rounded-xl px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
+              style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', color: '#F87171' }}
               onClick={() => alert('Contact support to delete your workspace.')}
             >
               Delete workspace
@@ -219,7 +266,7 @@ export default function SettingsPage() {
 
         {/* Error */}
         {error && (
-          <p className="text-sm text-red-600">{error}</p>
+          <p style={{ color: '#F87171' }} className="text-sm">{error}</p>
         )}
 
         {/* Save */}
@@ -227,12 +274,21 @@ export default function SettingsPage() {
           <button
             onClick={save}
             disabled={saving}
-            className="rounded-full bg-ink-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-ink-800 disabled:opacity-50"
+            className="rounded-full px-6 py-2.5 text-sm font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
+            style={{ background: 'linear-gradient(135deg, #F8C352, #E8960F)', color: '#080716' }}
           >
             {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save changes'}
           </button>
         </div>
       </div>
+    </>
+  )
+}
+
+export default function SettingsPage() {
+  return (
+    <DashboardShell active="settings">
+      <SettingsContent />
     </DashboardShell>
   )
 }

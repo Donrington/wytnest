@@ -7,6 +7,7 @@ import { useWorkspace } from '@/lib/hooks/useWorkspace'
 import { CreateCampaignModal } from '@/components/dashboard/CreateCampaignModal'
 import { createClient } from '@/lib/supabase/client'
 import type { Testimonial } from '@/lib/types/database'
+import { DashThemeContext } from '@/lib/hooks/useDashTheme'
 
 const E_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
@@ -68,6 +69,19 @@ const DARK = {
   pillThumb:          'rgba(255,255,255,0.14)',
   pillThumbShadow:    '0 1px 4px rgba(0,0,0,0.5)',
   tableRowBorder:     'rgba(255,255,255,0.05)',
+  // Content area
+  card:               'rgba(12,10,26,0.72)',
+  cardBorder:         'rgba(255,255,255,0.07)',
+  cardShadow:         '0 1px 24px -8px rgba(0,0,0,0.5)',
+  heading:            '#E4E3F0',
+  subheading:         '#B8B5D4',
+  body:               '#6F6C92',
+  muted:              '#3E3B61',
+  tableRowHoverBg:    'rgba(255,255,255,0.03)',
+  tagSuccessBg:       'rgba(52,211,153,0.12)',
+  tagSuccessText:     '#34D399',
+  tagPendingBg:       'rgba(251,191,36,0.12)',
+  tagPendingText:     '#FBBF24',
 }
 
 const LIGHT = {
@@ -127,6 +141,19 @@ const LIGHT = {
   pillThumb:          '#FFFFFF',
   pillThumbShadow:    '0 1px 6px rgba(0,0,0,0.14)',
   tableRowBorder:     'rgba(0,0,0,0.06)',
+  // Content area
+  card:               '#FFFFFF',
+  cardBorder:         'rgba(0,0,0,0.07)',
+  cardShadow:         '0 1px 16px -4px rgba(0,0,0,0.08)',
+  heading:            '#1A1835',
+  subheading:         '#4E4B6A',
+  body:               '#9897B3',
+  muted:              '#C5C3D8',
+  tableRowHoverBg:    'rgba(0,0,0,0.02)',
+  tagSuccessBg:       'rgba(16,185,129,0.10)',
+  tagSuccessText:     '#059669',
+  tagPendingBg:       'rgba(245,158,11,0.10)',
+  tagPendingText:     '#B45309',
 }
 
 type Theme = typeof DARK
@@ -523,6 +550,7 @@ export function DashboardShell({
   }
 
   return (
+    <DashThemeContext.Provider value={{ isDark, T }}>
     <div className="flex min-h-screen" style={{ background: T.rootBg, transition: 'background 0.3s' }}>
 
       {showCreate && workspace && (
@@ -782,5 +810,6 @@ export function DashboardShell({
         </main>
       </div>
     </div>
+    </DashThemeContext.Provider>
   )
 }
