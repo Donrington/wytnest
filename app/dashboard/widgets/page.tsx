@@ -15,7 +15,10 @@ const LAYOUTS: { id: WidgetLayout; label: string; desc: string }[] = [
   { id: 'ticker',            label: 'Floating ticker',  desc: 'Looping marquee' },
 ]
 
-const ACCENTS = ['#4F3FCC', '#E8960F', '#16A660', '#D4537E']
+const ACCENTS = [
+  '#4F3FCC', '#7B6EF5', '#E8960F', '#F8C352',
+  '#16A660', '#2DD4BF', '#D4537E', '#F87171',
+]
 
 function WidgetsContent() {
   const { T } = useDashTheme()
@@ -269,20 +272,47 @@ function WidgetsContent() {
               </div>
 
               <label style={{ color: T.muted }} className="mb-2 block text-xs font-medium">Accent color</label>
-              <div className="mb-4 flex gap-2">
+              <div className="mb-4 grid grid-cols-4 gap-2">
                 {ACCENTS.map(c => (
                   <button
                     key={c}
                     onClick={() => setAccent(c)}
-                    className="h-9 w-9 rounded-lg transition-all"
+                    className="h-8 w-full rounded-lg transition-all"
                     style={{
-                      background: c,
-                      outline: accent === c ? `2px solid ${T.heading}` : 'none',
+                      background:    c,
+                      outline:       accent === c ? `2px solid ${T.heading}` : '2px solid transparent',
                       outlineOffset: '2px',
                     }}
                     aria-label={c}
                   />
                 ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={accent}
+                  onChange={e => setAccent(e.target.value)}
+                  className="h-8 w-8 cursor-pointer rounded-lg"
+                  style={{ border: `1px solid ${T.cardBorder}`, background: 'transparent', padding: '1px' }}
+                  title="Custom color"
+                />
+                <input
+                  type="text"
+                  value={accent}
+                  onChange={e => setAccent(e.target.value)}
+                  placeholder="#4F3FCC"
+                  className="flex-1"
+                  style={{
+                    background:   T.tableRowHoverBg,
+                    border:       `1px solid ${T.cardBorder}`,
+                    color:        T.heading,
+                    borderRadius: '10px',
+                    padding:      '6px 10px',
+                    fontFamily:   'monospace',
+                    fontSize:     '0.8rem',
+                    outline:      'none',
+                  }}
+                />
               </div>
 
               <label style={{ color: T.muted }} className="mb-2 block text-xs font-medium">Border radius — {radius}px</label>
@@ -323,22 +353,52 @@ function WidgetsContent() {
 
           {/* Live preview */}
           <div
-            className="min-h-[420px] rounded-2xl p-6"
+            className="min-h-[420px] rounded-2xl overflow-hidden"
             style={
               theme === 'dark'
                 ? { background: '#0B0919', border: '1px solid rgba(255,255,255,0.07)', boxShadow: T.cardShadow }
-                : { background: '#F8F7FF', border: `1px solid ${T.cardBorder}`, boxShadow: T.cardShadow }
+                : { background: '#F5F4FC', border: `1px solid ${T.cardBorder}`, boxShadow: T.cardShadow }
             }
           >
-            <div className="mb-4 flex items-center gap-2">
-              <span className="text-xs font-medium" style={{ color: theme === 'dark' ? '#6F6C92' : T.body }}>
-                Live preview · {LAYOUTS.find(l => l.id === layout)?.label}
-              </span>
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+            {/* Preview chrome bar */}
+            <div
+              className="flex items-center justify-between px-5 py-3"
+              style={{
+                borderBottom: theme === 'dark'
+                  ? '1px solid rgba(255,255,255,0.06)'
+                  : `1px solid ${T.tableRowBorder}`,
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400"
+                />
+                <span
+                  className="text-xs font-medium"
+                  style={{ color: theme === 'dark' ? '#6F6C92' : T.muted }}
+                >
+                  Live preview · {LAYOUTS.find(l => l.id === layout)?.label}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div
+                  className="h-3.5 w-3.5 rounded-full"
+                  style={{ background: accent, boxShadow: `0 0 6px ${accent}66` }}
+                />
+                <span
+                  className="font-mono text-[0.65rem]"
+                  style={{ color: theme === 'dark' ? '#3E3B61' : T.muted }}
+                >
+                  {accent}
+                </span>
+              </div>
             </div>
-            {layout === 'bento_wall'       && <BentoWall dark={theme === 'dark'} />}
-            {layout === 'cinematic_slider' && <CinematicSlider dark={theme === 'dark'} />}
-            {layout === 'ticker'           && <Ticker dark={theme === 'dark'} />}
+
+            <div className="p-6">
+              {layout === 'bento_wall'       && <BentoWall dark={theme === 'dark'} accent={accent} radius={radius} />}
+              {layout === 'cinematic_slider' && <CinematicSlider dark={theme === 'dark'} accent={accent} radius={radius} />}
+              {layout === 'ticker'           && <Ticker dark={theme === 'dark'} accent={accent} radius={radius} />}
+            </div>
           </div>
         </div>
       ) : null}
