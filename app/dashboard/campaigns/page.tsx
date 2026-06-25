@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { toast } from 'sonner'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { useWorkspace } from '@/lib/hooks/useWorkspace'
 import { createClient } from '@/lib/supabase/client'
@@ -81,6 +82,7 @@ function CampaignsContent() {
     navigator.clipboard.writeText(url)
     setCopied(c.id)
     setTimeout(() => setCopied(null), 2000)
+    toast.success('Campaign link copied.')
   }
 
   const cardStyle = {

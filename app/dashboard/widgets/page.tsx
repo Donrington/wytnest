@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { toast } from 'sonner'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { BentoWall } from '@/components/widgets/BentoWall'
 import { CinematicSlider, Ticker } from '@/components/widgets/Ticker'
@@ -28,7 +29,6 @@ function WidgetsContent() {
   const [selected, setSelected] = useState<Widget | null>(null)
   const [loading,  setLoading]  = useState(true)
   const [saving,   setSaving]   = useState(false)
-  const [saved,    setSaved]    = useState(false)
   const [copied,   setCopied]   = useState(false)
   const [creating, setCreating] = useState(false)
   const [newName,  setNewName]  = useState('')
@@ -99,8 +99,7 @@ function WidgetsContent() {
       setSelected(updated)
     }
     setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    toast.success('Widget saved.')
   }
 
   const embedSnippet = (tab: 'HTML' | 'React' | 'Vue', id: string) => {
@@ -116,6 +115,7 @@ function WidgetsContent() {
     navigator.clipboard.writeText(embedSnippet(embedTab, selected.public_id))
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+    toast.success('Embed snippet copied.')
   }
 
   const cardStyle = {
@@ -334,7 +334,7 @@ function WidgetsContent() {
               className="w-full rounded-full py-3 text-sm font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
               style={{ background: 'linear-gradient(135deg, #F8C352, #E8960F)', color: '#080716' }}
             >
-              {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save widget'}
+              {saving ? 'Saving…' : 'Save widget'}
             </button>
 
             {/* Embed panel */}

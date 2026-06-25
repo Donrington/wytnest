@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { toast } from 'sonner'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { useWorkspace } from '@/lib/hooks/useWorkspace'
 import { createClient } from '@/lib/supabase/client'
@@ -105,12 +106,15 @@ function AddTestimonialModal({
       .single()
 
     if (err || !data) {
-      setError(err?.message ?? 'Something went wrong. Please try again.')
+      const msg = err?.message ?? 'Something went wrong. Please try again.'
+      setError(msg)
+      toast.error(msg)
       setSaving(false)
       return
     }
 
     onAdd(data as Testimonial)
+    toast.success('Testimonial added.')
     onClose()
   }
 
@@ -510,12 +514,17 @@ function TestimonialsContent() {
 
   const moderate = async (id: string, status: 'approved' | 'rejected') => {
     setActing(id)
-    await createClient()
+    const { error } = await createClient()
       .from('testimonials')
       .update({ status, moderated_at: new Date().toISOString() })
       .eq('id', id)
-    setTestimonials(prev => prev.map(t => t.id === id ? { ...t, status } : t))
-    setSelected(prev => prev?.id === id ? { ...prev, status } : prev)
+    if (error) {
+      toast.error('Failed to update testimonial.')
+    } else {
+      setTestimonials(prev => prev.map(t => t.id === id ? { ...t, status } : t))
+      setSelected(prev => prev?.id === id ? { ...prev, status } : prev)
+      toast.success(status === 'approved' ? 'Testimonial approved.' : 'Testimonial rejected.')
+    }
     setActing(null)
   }
 

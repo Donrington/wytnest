@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { PLAN_LIMITS } from '@/lib/types/database'
 import type { Campaign, PlanTier } from '@/lib/types/database'
@@ -87,10 +88,13 @@ export function CreateCampaignModal({ workspaceId, plan, isDark, onCreated, onCl
     setLoading(false)
 
     if (dbErr) {
-      setError(dbErr.message.includes('unique') ? 'That slug is already taken. Try a different name.' : dbErr.message)
+      const msg = dbErr.message.includes('unique') ? 'That slug is already taken. Try a different name.' : dbErr.message
+      setError(msg)
+      toast.error(msg)
       return
     }
 
+    toast.success('Campaign created.')
     onCreated(data as Campaign)
     onClose()
   }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Toaster } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '@/lib/hooks/useWorkspace'
 import { CreateCampaignModal } from '@/components/dashboard/CreateCampaignModal'
@@ -562,6 +563,17 @@ export function DashboardShell({
 
   return (
     <DashThemeContext.Provider value={{ isDark, T }}>
+    <Toaster
+      position="bottom-right"
+      theme={isDark ? 'dark' : 'light'}
+      toastOptions={{
+        style: {
+          borderRadius: '12px',
+          fontFamily: 'inherit',
+          fontSize: '0.875rem',
+        },
+      }}
+    />
     <div className="flex min-h-screen" style={{ background: T.rootBg, transition: 'background 0.3s' }}>
 
       {showCreate && workspace && (

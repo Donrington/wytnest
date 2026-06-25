@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { useWorkspace } from '@/lib/hooks/useWorkspace'
 import { createClient } from '@/lib/supabase/client'
@@ -115,6 +116,7 @@ function AvatarUpload({
     if (upErr) {
       setPreview(logoUrl)          // revert
       setUploadErr(upErr.message)
+      toast.error(upErr.message)
       setUploading(false)
       URL.revokeObjectURL(objectUrl)
       return
@@ -143,6 +145,7 @@ function AvatarUpload({
 
     setPreview(busted)
     onUploaded(publicUrl)
+    toast.success('Avatar updated.')
   }
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -212,9 +215,6 @@ function AvatarUpload({
         {uploadErr && (
           <p className="mt-1 text-xs font-medium" style={{ color: '#F87171' }}>{uploadErr}</p>
         )}
-        {!uploading && !uploadErr && preview && preview !== logoUrl && (
-          <p className="mt-1 text-xs font-medium" style={{ color: '#34D399' }}>✓ Avatar updated</p>
-        )}
       </div>
 
       <input
@@ -240,7 +240,6 @@ function SettingsContent() {
   const [brandColor, setBrandColor] = useState('#4F3FCC')
   const [logoUrl,    setLogoUrl]    = useState<string | null>(null)
   const [saving,     setSaving]     = useState(false)
-  const [saved,      setSaved]      = useState(false)
   const [error,      setError]      = useState('')
 
   // Load auth user
@@ -280,9 +279,9 @@ function SettingsContent() {
     setSaving(false)
     if (err) {
       setError(err.message)
+      toast.error(err.message)
     } else {
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2200)
+      toast.success('Settings saved.')
     }
   }
 
@@ -452,7 +451,7 @@ function SettingsContent() {
             className="rounded-full px-6 py-2.5 text-sm font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
             style={{ background: 'linear-gradient(135deg, #F8C352, #E8960F)', color: '#080716' }}
           >
-            {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save changes'}
+            {saving ? 'Saving…' : 'Save changes'}
           </button>
         </div>
       </div>
