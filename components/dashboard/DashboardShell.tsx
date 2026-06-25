@@ -360,13 +360,15 @@ export function DashboardShell({
   const [collapsed,    setCollapsed]    = useState(false)
   const [mobileOpen,   setMobileOpen]   = useState(false)
   const [notifOpen,    setNotifOpen]    = useState(false)
+  const [profileOpen,  setProfileOpen]  = useState(false)
   const [isDark,       setIsDark]       = useState(true)
   const [showCreate,   setShowCreate]   = useState(false)
   const [authUser,     setAuthUser]     = useState<{ name: string; email: string; initials: string } | null>(null)
   const [pendingCount, setPendingCount] = useState(0)
   const [notifs,       setNotifs]       = useState<{ title: string; body: string; time: string }[]>([])
 
-  const notifRef = useRef<HTMLDivElement>(null)
+  const notifRef    = useRef<HTMLDivElement>(null)
+  const profileRef  = useRef<HTMLDivElement>(null)
   const { workspace } = useWorkspace()
   const T = isDark ? DARK : LIGHT
 
@@ -446,6 +448,16 @@ export function DashboardShell({
     document.addEventListener('mousedown', handle)
     return () => document.removeEventListener('mousedown', handle)
   }, [notifOpen])
+
+  // Close profile dropdown on outside click
+  useEffect(() => {
+    if (!profileOpen) return
+    function handle(e: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false)
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [profileOpen])
 
   // Upgrade pill text
   const planLabel = workspace?.plan === 'agency' ? 'Agency' : workspace?.plan === 'growth' ? 'Growth' : workspace?.plan === 'starter' ? 'Starter' : 'Free'
@@ -805,6 +817,101 @@ export function DashboardShell({
                         style={{ background: T.notifFooterBg, color: T.notifFooterText }}>
                         View all testimonials
                       </a>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Avatar / profile dropdown */}
+            <div ref={profileRef} className="relative">
+              <button
+                onClick={() => { setProfileOpen(v => !v); setNotifOpen(false) }}
+                aria-label="Account menu"
+                className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl transition-all"
+                style={{
+                  outline: profileOpen ? `2px solid ${T.cardBorder}` : 'none',
+                  outlineOffset: '2px',
+                }}
+              >
+                {workspace?.logo_url ? (
+                  <img src={workspace.logo_url} alt="Avatar" className="h-full w-full rounded-xl object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-[0.7rem] font-bold text-white"
+                       style={{ background: 'linear-gradient(135deg, #4F3FCC, #7B6EF5)' }}>
+                    {authUser?.initials ?? '··'}
+                  </div>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {profileOpen && (
+                  <motion.div
+                    className="absolute right-0 top-[calc(100%+10px)] z-50 w-64 overflow-hidden rounded-2xl"
+                    style={{
+                      background:          T.notifDropBg,
+                      border:              `1px solid ${T.notifDropBorder}`,
+                      boxShadow:           T.notifDropShadow,
+                      backdropFilter:      'blur(24px)',
+                      WebkitBackdropFilter:'blur(24px)',
+                    }}
+                    initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0,  scale: 1   }}
+                    exit={{    opacity: 0, y: -6, scale: 0.97 }}
+                    transition={{ duration: 0.18, ease: E_OUT }}
+                  >
+                    {/* Profile card */}
+                    <div className="flex items-center gap-3 px-4 py-4" style={{ borderBottom: `1px solid ${T.notifHdrBorder}` }}>
+                      <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl text-sm font-bold text-white"
+                           style={{ background: 'linear-gradient(135deg, #4F3FCC, #7B6EF5)' }}>
+                        {workspace?.logo_url
+                          ? <img src={workspace.logo_url} alt="Avatar" className="h-full w-full object-cover" />
+                          : (authUser?.initials ?? '··')
+                        }
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-[0.82rem] font-semibold" style={{ color: T.heading }}>{authUser?.name ?? '·····'}</p>
+                        <p className="truncate text-[0.7rem]" style={{ color: T.body }}>{authUser?.email ?? ''}</p>
+                        <span className="mt-1.5 inline-flex items-center rounded-full px-2 py-0.5 text-[0.6rem] font-semibold capitalize"
+                              style={{ background: T.upgradeIconBg, color: T.upgradePlan }}>
+                          {planLabel}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Links */}
+                    <div className="py-1.5">
+                      {[
+                        { label: 'Settings',       href: '/dashboard/settings',    icon: 'settings' },
+                        { label: 'Billing',         href: '/dashboard/billing',     icon: 'billing'  },
+                        { label: 'Help & Support',  href: '/dashboard/help',        icon: 'help'     },
+                      ].map(({ label, href, icon }) => (
+                        <a
+                          key={href}
+                          href={href}
+                          className="flex items-center gap-3 px-4 py-2.5 text-[0.82rem] transition-colors"
+                          style={{ color: T.body }}
+                          onMouseEnter={e => (e.currentTarget.style.background = T.notifItemHoverBg)}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                          onClick={() => setProfileOpen(false)}
+                        >
+                          <span style={{ color: T.notifIconColor }}><Ico id={icon} size={15} /></span>
+                          {label}
+                        </a>
+                      ))}
+                      <div className="my-1.5 h-px" style={{ background: T.notifHdrBorder }} />
+                      <button
+                        onClick={handleSignOut}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-[0.82rem] text-left transition-colors"
+                        style={{ color: '#F87171' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = T.notifItemHoverBg)}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Sign out
+                      </button>
                     </div>
                   </motion.div>
                 )}

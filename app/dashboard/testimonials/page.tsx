@@ -300,14 +300,31 @@ function TestimonialDrawer({
   T,
   acting,
   onModerate,
+  onDelete,
   onClose,
 }: {
   t: Testimonial
   T: ReturnType<typeof useDashTheme>['T']
   acting: string | null
   onModerate: (id: string, status: 'approved' | 'rejected') => void
+  onDelete: (id: string) => Promise<void>
   onClose: () => void
 }) {
+  const [confirmDel, setConfirmDel] = useState(false)
+  const [isDel,      setIsDel]      = useState(false)
+
+  useEffect(() => {
+    if (!confirmDel) return
+    const timer = setTimeout(() => setConfirmDel(false), 3000)
+    return () => clearTimeout(timer)
+  }, [confirmDel])
+
+  const handleDelete = async () => {
+    setIsDel(true)
+    await onDelete(t.id)
+    setIsDel(false)
+  }
+
   const statusStyle = (status: string) => {
     if (status === 'approved') return { background: T.tagSuccessBg,          color: T.tagSuccessText }
     if (status === 'pending')  return { background: T.tagPendingBg,           color: T.tagPendingText }
@@ -453,26 +470,56 @@ function TestimonialDrawer({
           )}
         </div>
 
-        {t.status === 'pending' && (
-          <div className="px-6 py-5 flex gap-3" style={{ borderTop: `1px solid ${T.tableRowBorder}` }}>
+        <div className="flex flex-col gap-3 px-6 py-5" style={{ borderTop: `1px solid ${T.tableRowBorder}` }}>
+          {t.status === 'pending' && (
+            <div className="flex gap-3">
+              <button
+                onClick={() => onModerate(t.id, 'approved')}
+                disabled={acting === t.id}
+                className="flex-1 rounded-full py-3 text-sm font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #34D399, #059669)', color: '#fff' }}
+              >
+                {acting === t.id ? '…' : 'Approve'}
+              </button>
+              <button
+                onClick={() => onModerate(t.id, 'rejected')}
+                disabled={acting === t.id}
+                className="flex-1 rounded-full py-3 text-sm font-medium transition-opacity hover:opacity-75 disabled:opacity-50"
+                style={{ background: T.tableRowHoverBg, border: `1px solid ${T.cardBorder}`, color: T.body }}
+              >
+                Reject
+              </button>
+            </div>
+          )}
+
+          {confirmDel ? (
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmDel(false)}
+                className="flex-1 rounded-full py-2.5 text-sm font-medium transition-opacity hover:opacity-75"
+                style={{ background: T.tableRowHoverBg, border: `1px solid ${T.cardBorder}`, color: T.body }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDel}
+                className="flex-1 rounded-full py-2.5 text-sm font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
+                style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', color: '#F87171' }}
+              >
+                {isDel ? 'Deleting…' : 'Yes, delete'}
+              </button>
+            </div>
+          ) : (
             <button
-              onClick={() => onModerate(t.id, 'approved')}
-              disabled={acting === t.id}
-              className="flex-1 rounded-full py-3 text-sm font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
-              style={{ background: 'linear-gradient(135deg, #34D399, #059669)', color: '#fff' }}
+              onClick={() => setConfirmDel(true)}
+              className="w-full rounded-full py-2.5 text-sm font-medium transition-opacity hover:opacity-75"
+              style={{ background: T.tableRowHoverBg, border: `1px solid ${T.cardBorder}`, color: '#F87171' }}
             >
-              {acting === t.id ? '…' : 'Approve'}
+              Delete testimonial
             </button>
-            <button
-              onClick={() => onModerate(t.id, 'rejected')}
-              disabled={acting === t.id}
-              className="flex-1 rounded-full py-3 text-sm font-medium transition-opacity hover:opacity-75 disabled:opacity-50"
-              style={{ background: T.tableRowHoverBg, border: `1px solid ${T.cardBorder}`, color: T.body }}
-            >
-              Reject
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </motion.div>
     </div>
   )
@@ -487,6 +534,8 @@ function TestimonialsContent() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
   const [loading, setLoading]           = useState(true)
   const [acting, setActing]             = useState<string | null>(null)
+  const [deleting, setDeleting]         = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [selected, setSelected]         = useState<Testimonial | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [now, setNow]                   = useState('')
@@ -530,6 +579,23 @@ function TestimonialsContent() {
 
   const handleAdd = (t: Testimonial) => {
     setTestimonials(prev => [t, ...prev])
+  }
+
+  const deleteTestimonial = async (id: string) => {
+    setDeleting(id)
+    const { error } = await createClient()
+      .from('testimonials')
+      .delete()
+      .eq('id', id)
+    if (error) {
+      toast.error('Failed to delete testimonial.')
+    } else {
+      setTestimonials(prev => prev.filter(t => t.id !== id))
+      setSelected(prev => prev?.id === id ? null : prev)
+      setConfirmDelete(null)
+      toast.success('Testimonial deleted.')
+    }
+    setDeleting(null)
   }
 
   const visible = testimonials.filter(t => {
@@ -649,7 +715,7 @@ function TestimonialsContent() {
           {visible.map((t) => (
             <div
               key={t.id}
-              onClick={() => setSelected(t)}
+              onClick={() => { setConfirmDelete(null); setSelected(t) }}
               style={{ ...cardStyle, cursor: 'pointer' }}
               className="group flex flex-col p-5 transition-all hover:scale-[1.01]"
             >
@@ -682,6 +748,39 @@ function TestimonialsContent() {
                   <span className="rounded-full px-2 py-0.5 text-xs font-medium capitalize" style={statusStyle(t.status)}>
                     {t.status}
                   </span>
+                  <button
+                    onClick={e => {
+                      e.stopPropagation()
+                      if (confirmDelete === t.id) {
+                        deleteTestimonial(t.id)
+                      } else {
+                        setConfirmDelete(t.id)
+                      }
+                    }}
+                    disabled={deleting === t.id}
+                    title={confirmDelete === t.id ? 'Click again to confirm delete' : 'Delete testimonial'}
+                    className="flex h-6 w-6 items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-all disabled:opacity-30"
+                    style={confirmDelete === t.id
+                      ? { background: 'rgba(239,68,68,0.18)', color: '#F87171', border: '1px solid rgba(239,68,68,0.35)' }
+                      : { background: T.tableRowHoverBg, color: T.muted }}
+                  >
+                    {deleting === t.id ? (
+                      <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="40" strokeDashoffset="15" strokeLinecap="round" />
+                      </svg>
+                    ) : confirmDelete === t.id ? (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                    ) : (
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14H6L5 6" />
+                        <path d="M10 11v6M14 11v6" />
+                        <path d="M9 6V4h6v2" />
+                      </svg>
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -752,6 +851,7 @@ function TestimonialsContent() {
             T={T}
             acting={acting}
             onModerate={moderate}
+            onDelete={deleteTestimonial}
             onClose={() => setSelected(null)}
           />
         )}
