@@ -9,21 +9,8 @@ import { Features } from '@/components/marketing/Features'
 import { Pricing } from '@/components/marketing/Pricing'
 import { CTA, Footer } from '@/components/marketing/CTA'
 import { FAQ } from '@/components/marketing/FAQ'
+import Script from 'next/script'
 import { useScrollReveal } from '@/lib/use-scroll-reveal'
-
-function WytnestWidget() {
-  useEffect(() => {
-    const s = document.createElement('script')
-    s.src = 'https://wytnest.vercel.app/embed.js'
-    s.dataset.widget = 'f8d30a947af8'
-    s.async = true
-    document.body.appendChild(s)
-    return () => {
-      if (document.body.contains(s)) document.body.removeChild(s)
-    }
-  }, [])
-  return <div id="wytnest-widget" />
-}
 
 const E_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
@@ -98,7 +85,13 @@ export default function HomePage() {
           <h2 className="font-display text-3xl font-extrabold text-white">See it in action</h2>
           <p className="mt-3 text-base" style={{ color: '#9390B8' }}>This widget is embedded directly on this page using a single script tag.</p>
         </div>
-        <WytnestWidget />
+        <div id="wytnest-widget-demo" />
+        <Script
+          src="https://wytnest.vercel.app/embed.js"
+          data-widget="f8d30a947af8"
+          data-target="#wytnest-widget-demo"
+          strategy="afterInteractive"
+        />
       </section>
 
       <HowItWorks />
