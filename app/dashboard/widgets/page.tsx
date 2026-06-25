@@ -34,11 +34,12 @@ function WidgetsContent() {
   const [newName,  setNewName]  = useState('')
 
   // Local editable state (mirrors selected widget)
-  const [name,    setName]    = useState('')
-  const [layout,  setLayout]  = useState<WidgetLayout>('bento_wall')
-  const [theme,   setTheme]   = useState<'light' | 'dark'>('dark')
-  const [accent,  setAccent]  = useState('#4F3FCC')
-  const [radius,  setRadius]  = useState(12)
+  const [name,      setName]      = useState('')
+  const [layout,    setLayout]    = useState<WidgetLayout>('bento_wall')
+  const [theme,     setTheme]     = useState<'light' | 'dark'>('dark')
+  const [accent,    setAccent]    = useState('#4F3FCC')
+  const [radius,    setRadius]    = useState(12)
+  const [embedTab,  setEmbedTab]  = useState<'HTML' | 'React' | 'Vue'>('HTML')
 
   const pick = (w: Widget) => {
     setSelected(w)
@@ -102,10 +103,17 @@ function WidgetsContent() {
     setTimeout(() => setSaved(false), 2000)
   }
 
+  const embedSnippet = (tab: 'HTML' | 'React' | 'Vue', id: string) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://wytnest.com'
+    if (tab === 'HTML') return `<script\n  src="${origin}/embed.js"\n  data-widget="${id}"\n  async\n></script>`
+    if (tab === 'React') return `import { useEffect } from 'react'\n\nexport function WytnestWidget() {\n  useEffect(() => {\n    const s = document.createElement('script')\n    s.src = '${origin}/embed.js'\n    s.dataset.widget = '${id}'\n    s.async = true\n    document.body.appendChild(s)\n    return () => { document.body.removeChild(s) }\n  }, [])\n  return <div id="wytnest-widget" />\n}`
+    // Vue
+    return `<template>\n  <div id="wytnest-widget" />\n</template>\n\n<script setup>\nimport { onMounted, onUnmounted } from 'vue'\nlet el\nonMounted(() => {\n  el = document.createElement('script')\n  el.src = '${origin}/embed.js'\n  el.dataset.widget = '${id}'\n  el.async = true\n  document.body.appendChild(el)\n})\nonUnmounted(() => { el && document.body.removeChild(el) })\n</script>`
+  }
+
   const copyEmbed = () => {
     if (!selected) return
-    const code = `<script src="${window.location.origin}/embed.js" data-widget="${selected.public_id}" async></script>`
-    navigator.clipboard.writeText(code)
+    navigator.clipboard.writeText(embedSnippet(embedTab, selected.public_id))
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -329,25 +337,93 @@ function WidgetsContent() {
               {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save widget'}
             </button>
 
-            {/* Embed code */}
+            {/* Embed panel */}
             <div
-              className="rounded-2xl p-4"
-              style={{ background: 'rgba(8,7,16,0.85)', border: '1px solid rgba(255,255,255,0.08)' }}
+              className="overflow-hidden rounded-2xl"
+              style={{ background: 'rgba(8,7,16,0.92)', border: '1px solid rgba(255,255,255,0.09)' }}
             >
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs font-medium" style={{ color: '#6F6C92' }}>Embed code</p>
-                <span className="font-mono text-[0.62rem]" style={{ color: '#3E3B61' }}>ID: {selected.public_id}</span>
-              </div>
-              <code className="block break-all font-mono text-[0.7rem] leading-relaxed" style={{ color: '#B8B5D4' }}>
-                {`<script src="${typeof window !== 'undefined' ? window.location.origin : 'https://wytnest.com'}/embed.js" data-widget="${selected.public_id}" async></script>`}
-              </code>
-              <button
-                onClick={copyEmbed}
-                className="mt-3 w-full rounded-lg py-2 text-xs font-medium transition-opacity hover:opacity-80"
-                style={{ background: 'rgba(255,255,255,0.08)', color: '#E4E3F0' }}
+              {/* Panel header */}
+              <div
+                className="flex items-center justify-between px-4 py-3"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
               >
-                {copied ? '✓ Copied!' : 'Copy embed code'}
-              </button>
+                <div>
+                  <p className="text-xs font-semibold" style={{ color: '#E4E3F0' }}>Embed code</p>
+                  <p className="mt-0.5 font-mono text-[0.58rem]" style={{ color: '#3E3B61' }}>
+                    ID: {selected.public_id}
+                  </p>
+                </div>
+                {/* Framework tabs */}
+                <div
+                  className="flex gap-0.5 rounded-lg p-0.5"
+                  style={{ background: 'rgba(255,255,255,0.05)' }}
+                >
+                  {(['HTML', 'React', 'Vue'] as const).map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => { setEmbedTab(tab); setCopied(false) }}
+                      className="rounded-md px-2.5 py-1 text-[0.65rem] font-medium transition-all"
+                      style={
+                        embedTab === tab
+                          ? { background: 'rgba(79,63,204,0.45)', color: '#A89FF5' }
+                          : { color: '#4E4B72' }
+                      }
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Code block */}
+              <div className="px-4 pt-3 pb-1">
+                <pre
+                  className="overflow-x-auto font-mono text-[0.68rem] leading-relaxed"
+                  style={{ color: '#B8B5D4', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}
+                >
+                  {embedSnippet(embedTab, selected.public_id)}
+                </pre>
+              </div>
+
+              {/* Copy button */}
+              <div className="px-4 pb-3">
+                <button
+                  onClick={copyEmbed}
+                  className="mt-2 w-full rounded-lg py-2 text-xs font-medium transition-all hover:opacity-90"
+                  style={
+                    copied
+                      ? { background: 'rgba(52,211,153,0.15)', color: '#34D399' }
+                      : { background: 'rgba(255,255,255,0.07)', color: '#E4E3F0' }
+                  }
+                >
+                  {copied ? '✓ Copied!' : 'Copy snippet'}
+                </button>
+              </div>
+
+              {/* Install steps */}
+              <div
+                className="space-y-2.5 px-4 py-3"
+                style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <p className="text-[0.65rem] font-semibold uppercase tracking-wide" style={{ color: '#4E4B72' }}>
+                  How to install
+                </p>
+                {[
+                  embedTab === 'HTML'  ? 'Paste the snippet just before </body>' : 'Drop the component anywhere on your page',
+                  'Save & deploy your site',
+                  'The widget loads automatically',
+                ].map((step, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span
+                      className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[0.58rem] font-bold"
+                      style={{ background: 'rgba(79,63,204,0.3)', color: '#7B6EF5' }}
+                    >
+                      {i + 1}
+                    </span>
+                    <p className="text-xs leading-snug" style={{ color: '#6F6C92' }}>{step}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 

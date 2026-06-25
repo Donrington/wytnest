@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { useDashTheme } from '@/lib/hooks/useDashTheme'
 
@@ -82,8 +83,15 @@ const INTEGRATIONS = [
   },
 ]
 
+const EMBED_STEPS = [
+  { n: '1', text: 'Go to Widgets, create or pick a widget, then copy the embed snippet.' },
+  { n: '2', text: 'Paste the script tag just before </body> on any page of your site.' },
+  { n: '3', text: 'Save & deploy — your widget appears automatically, no page reload needed.' },
+]
+
 function IntegrationsContent() {
   const { T } = useDashTheme()
+  const [copied, setCopied] = useState(false)
 
   const cardStyle = {
     background:   T.card,
@@ -92,17 +100,143 @@ function IntegrationsContent() {
     borderRadius: '16px',
   }
 
+  const copyExample = () => {
+    navigator.clipboard.writeText('<script src="https://wytnest.com/embed.js" data-widget="YOUR_WIDGET_ID" async></script>')
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   return (
     <>
       <div className="mb-6">
         <h1 style={{ color: T.heading }} className="font-display text-2xl font-extrabold">Integrations</h1>
-        <p style={{ color: T.body }} className="mt-1">Connect Wytnest to your existing stack.</p>
+        <p style={{ color: T.body }} className="mt-1">Embed Wytnest on your site and connect to your stack.</p>
+      </div>
+
+      {/* ── Website embed ──────────────────────────────────────────── */}
+      <div className="mb-4">
+        <p style={{ color: T.muted }} className="mb-3 text-xs font-semibold uppercase tracking-widest">
+          Website embed
+        </p>
+      </div>
+
+      <div
+        className="mb-8 overflow-hidden rounded-2xl"
+        style={{ border: `1px solid ${T.cardBorder}`, boxShadow: T.cardShadow }}
+      >
+        {/* Top: description + CTA */}
+        <div
+          className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between"
+          style={{ background: T.card }}
+        >
+          <div className="flex items-start gap-4">
+            <div
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+              style={{ background: 'rgba(79,63,204,0.12)', color: '#7B6EF5' }}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="16 18 22 12 16 6" />
+                <polyline points="8 6 2 12 8 18" />
+              </svg>
+            </div>
+            <div>
+              <p style={{ color: T.heading }} className="font-semibold">Script tag embed</p>
+              <p style={{ color: T.body }} className="mt-1 max-w-md text-sm leading-relaxed">
+                Add one line to your HTML and your widget appears on any page — no framework required. Works with Webflow, Framer, Shopify, WordPress, and plain HTML.
+              </p>
+            </div>
+          </div>
+          <a
+            href="/dashboard/widgets"
+            className="shrink-0 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-opacity hover:opacity-85"
+            style={{ background: 'linear-gradient(135deg, #F8C352, #E8960F)', color: '#080716' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M3 9h18M9 21V9" />
+            </svg>
+            Open widget builder
+          </a>
+        </div>
+
+        {/* Bottom: code example + steps */}
+        <div
+          className="grid gap-0 sm:grid-cols-2"
+          style={{ borderTop: `1px solid ${T.tableRowBorder}` }}
+        >
+          {/* Code block */}
+          <div
+            className="p-5"
+            style={{ background: 'rgba(8,7,16,0.88)', borderRight: `1px solid rgba(255,255,255,0.05)` }}
+          >
+            <p className="mb-2 text-[0.65rem] font-semibold uppercase tracking-wide" style={{ color: '#4E4B72' }}>
+              Example snippet
+            </p>
+            <pre className="font-mono text-[0.7rem] leading-relaxed whitespace-pre-wrap break-all" style={{ color: '#B8B5D4' }}>
+{`<script
+  src="https://wytnest.com/embed.js"
+  data-widget="YOUR_WIDGET_ID"
+  async
+></script>`}
+            </pre>
+            <button
+              onClick={copyExample}
+              className="mt-3 w-full rounded-lg py-1.5 text-xs font-medium transition-all hover:opacity-90"
+              style={
+                copied
+                  ? { background: 'rgba(52,211,153,0.15)', color: '#34D399' }
+                  : { background: 'rgba(255,255,255,0.07)', color: '#E4E3F0' }
+              }
+            >
+              {copied ? '✓ Copied!' : 'Copy example'}
+            </button>
+          </div>
+
+          {/* Install steps */}
+          <div className="p-5" style={{ background: T.card }}>
+            <p style={{ color: T.muted }} className="mb-3 text-[0.65rem] font-semibold uppercase tracking-wide">
+              How to install
+            </p>
+            <div className="space-y-4">
+              {EMBED_STEPS.map((s, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <span
+                    className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[0.65rem] font-bold"
+                    style={{ background: 'rgba(79,63,204,0.15)', color: '#7B6EF5' }}
+                  >
+                    {s.n}
+                  </span>
+                  <p style={{ color: T.body }} className="text-sm leading-snug">{s.text}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Supported platforms */}
+            <div className="mt-5 flex flex-wrap gap-1.5">
+              {['Webflow', 'Framer', 'Next.js', 'React', 'Vue', 'Shopify', 'WordPress'].map(p => (
+                <span
+                  key={p}
+                  className="rounded-full px-2.5 py-0.5 text-[0.65rem] font-medium"
+                  style={{ background: T.tableRowHoverBg, color: T.muted }}
+                >
+                  {p}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── App integrations ───────────────────────────────────────── */}
+      <div className="mb-3">
+        <p style={{ color: T.muted }} className="mb-3 text-xs font-semibold uppercase tracking-widest">
+          App integrations
+        </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {INTEGRATIONS.map(intg => (
           <div key={intg.id} style={cardStyle} className="flex flex-col gap-4 p-5">
-
             <div className="flex items-start justify-between gap-3">
               <div
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
@@ -111,27 +245,19 @@ function IntegrationsContent() {
                 {intg.icon}
               </div>
               {intg.soon ? (
-                <span
-                  className="rounded-full px-2 py-0.5 text-xs font-medium"
-                  style={{ background: T.tableRowHoverBg, color: T.muted }}
-                >
+                <span className="rounded-full px-2 py-0.5 text-xs font-medium" style={{ background: T.tableRowHoverBg, color: T.muted }}>
                   Coming soon
                 </span>
               ) : (
-                <span
-                  className="rounded-full px-2 py-0.5 text-xs font-medium"
-                  style={{ background: T.tagSuccessBg, color: T.tagSuccessText }}
-                >
+                <span className="rounded-full px-2 py-0.5 text-xs font-medium" style={{ background: T.tagSuccessBg, color: T.tagSuccessText }}>
                   Available
                 </span>
               )}
             </div>
-
             <div className="flex-1">
               <p style={{ color: T.heading }} className="text-sm font-semibold">{intg.name}</p>
               <p style={{ color: T.body }} className="mt-1 text-xs leading-relaxed">{intg.desc}</p>
             </div>
-
             <button
               disabled={intg.soon}
               className="w-full rounded-xl py-2 text-xs font-semibold transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
@@ -141,7 +267,7 @@ function IntegrationsContent() {
                   : { background: 'linear-gradient(135deg, #F8C352, #E8960F)', color: '#080716' }
               }
             >
-              {intg.soon ? 'Notify me' : 'Connect'}
+              {intg.soon ? 'Coming soon' : 'Connect'}
             </button>
           </div>
         ))}
