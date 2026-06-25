@@ -11,6 +11,20 @@ import { CTA, Footer } from '@/components/marketing/CTA'
 import { FAQ } from '@/components/marketing/FAQ'
 import { useScrollReveal } from '@/lib/use-scroll-reveal'
 
+function WytnestWidget() {
+  useEffect(() => {
+    const s = document.createElement('script')
+    s.src = 'https://wytnest.vercel.app/embed.js'
+    s.dataset.widget = 'f8d30a947af8'
+    s.async = true
+    document.body.appendChild(s)
+    return () => {
+      if (document.body.contains(s)) document.body.removeChild(s)
+    }
+  }, [])
+  return <div id="wytnest-widget" />
+}
+
 const E_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
 function BackToTop() {
@@ -76,6 +90,17 @@ export default function HomePage() {
       <Hero />
       <LogoMarquee />
       <Features />
+
+      {/* Live widget demo */}
+      <section className="mx-auto max-w-6xl px-6 py-20">
+        <div className="mb-10 text-center">
+          <p className="eyebrow mb-3 text-xs uppercase tracking-widest" style={{ color: 'rgba(248,195,82,0.75)' }}>Live demo</p>
+          <h2 className="font-display text-3xl font-extrabold text-white">See it in action</h2>
+          <p className="mt-3 text-base" style={{ color: '#9390B8' }}>This widget is embedded directly on this page using a single script tag.</p>
+        </div>
+        <WytnestWidget />
+      </section>
+
       <HowItWorks />
       <Pricing />
       <CTA />
