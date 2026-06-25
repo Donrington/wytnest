@@ -17,11 +17,13 @@ type CampaignRow = Campaign & {
 function CampaignsContent() {
   const { T } = useDashTheme()
   const { workspace } = useWorkspace()
-  const [campaigns, setCampaigns] = useState<CampaignRow[]>([])
-  const [loading, setLoading]     = useState(true)
-  const [copied, setCopied]       = useState<string | null>(null)
-  const [hoverRow, setHoverRow]   = useState<string | null>(null)
-  const [now, setNow]             = useState('')
+  const [campaigns, setCampaigns]   = useState<CampaignRow[]>([])
+  const [loading, setLoading]       = useState(true)
+  const [copied, setCopied]         = useState<string | null>(null)
+  const [hoverRow, setHoverRow]     = useState<string | null>(null)
+  const [deleting, setDeleting]     = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [now, setNow]               = useState('')
 
   useEffect(() => {
     setNow(fmtNow())
@@ -76,6 +78,22 @@ function CampaignsContent() {
   }, [workspace])
 
   useEffect(() => { load() }, [load])
+
+  const deleteCampaign = async (id: string) => {
+    setDeleting(id)
+    const { error } = await createClient()
+      .from('campaigns')
+      .delete()
+      .eq('id', id)
+    if (error) {
+      toast.error('Failed to delete campaign.')
+    } else {
+      setCampaigns(prev => prev.filter(c => c.id !== id))
+      setConfirmDelete(null)
+      toast.success('Campaign deleted.')
+    }
+    setDeleting(null)
+  }
 
   const copyLink = (c: CampaignRow) => {
     const url = `${window.location.origin}/submit/${c.slug}`
@@ -190,33 +208,58 @@ function CampaignsContent() {
                     </div>
                   </div>
 
-                  {/* Copy link */}
-                  <button
-                    onClick={() => copyLink(c)}
-                    className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full py-2 text-xs font-medium transition-opacity hover:opacity-75"
-                    style={{
-                      background: T.tableRowHoverBg,
-                      border:     `1px solid ${T.cardBorder}`,
-                      color:      copied === c.id ? T.tagSuccessText : T.body,
-                    }}
-                  >
-                    {copied === c.id ? (
-                      <>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  {/* Actions row */}
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => copyLink(c)}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full py-2 text-xs font-medium transition-opacity hover:opacity-75"
+                      style={{
+                        background: T.tableRowHoverBg,
+                        border:     `1px solid ${T.cardBorder}`,
+                        color:      copied === c.id ? T.tagSuccessText : T.body,
+                      }}
+                    >
+                      {copied === c.id ? (
+                        <>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                            <path d="M20 6L9 17l-5-5" />
+                          </svg>
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" />
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                          </svg>
+                          Copy link
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => confirmDelete === c.id ? deleteCampaign(c.id) : setConfirmDelete(c.id)}
+                      disabled={deleting === c.id}
+                      title={confirmDelete === c.id ? 'Confirm delete?' : 'Delete campaign'}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all disabled:opacity-30"
+                      style={confirmDelete === c.id
+                        ? { background: 'rgba(239,68,68,0.15)', color: '#F87171', border: '1px solid rgba(239,68,68,0.35)' }
+                        : { background: T.tableRowHoverBg, color: T.muted, border: `1px solid ${T.cardBorder}` }}
+                    >
+                      {deleting === c.id ? (
+                        <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="40" strokeDashoffset="15" strokeLinecap="round" />
+                        </svg>
+                      ) : confirmDelete === c.id ? (
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20 6L9 17l-5-5" />
                         </svg>
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                          <rect x="9" y="9" width="13" height="13" rx="2" />
-                          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                      ) : (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
                         </svg>
-                        Copy link
-                      </>
-                    )}
-                  </button>
+                      )}
+                    </button>
+                  </div>
                 </div>
               )
             })}
@@ -227,7 +270,7 @@ function CampaignsContent() {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: `1px solid ${T.tableRowBorder}` }} className="text-left">
-                  {['Campaign', 'Status', 'Invites', 'Collected', 'Response rate', 'Share'].map(h => (
+                  {['Campaign', 'Status', 'Invites', 'Collected', 'Response rate', 'Actions'].map(h => (
                     <th key={h} style={{ color: T.muted }} className="px-6 py-4 font-medium text-xs uppercase tracking-wide">{h}</th>
                   ))}
                 </tr>
@@ -270,32 +313,57 @@ function CampaignsContent() {
                       <td style={{ color: T.body }} className="px-6 py-4">{c._collected}</td>
                       <td style={{ color: T.heading }} className="px-6 py-4 font-medium">{rate}</td>
                       <td className="px-6 py-4">
-                        <button
-                          onClick={() => copyLink(c)}
-                          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-75"
-                          style={{
-                            background: T.tableRowHoverBg,
-                            border:     `1px solid ${T.cardBorder}`,
-                            color:      T.body,
-                          }}
-                        >
-                          {copied === c.id ? (
-                            <>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ color: T.tagSuccessText }}>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => copyLink(c)}
+                            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-75"
+                            style={{
+                              background: T.tableRowHoverBg,
+                              border:     `1px solid ${T.cardBorder}`,
+                              color:      T.body,
+                            }}
+                          >
+                            {copied === c.id ? (
+                              <>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ color: T.tagSuccessText }}>
+                                  <path d="M20 6L9 17l-5-5" />
+                                </svg>
+                                Copied!
+                              </>
+                            ) : (
+                              <>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                                </svg>
+                                Copy link
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => confirmDelete === c.id ? deleteCampaign(c.id) : setConfirmDelete(c.id)}
+                            disabled={deleting === c.id}
+                            title={confirmDelete === c.id ? 'Confirm delete?' : 'Delete campaign'}
+                            className="flex h-7 w-7 items-center justify-center rounded-full transition-all disabled:opacity-30"
+                            style={confirmDelete === c.id
+                              ? { background: 'rgba(239,68,68,0.15)', color: '#F87171', border: '1px solid rgba(239,68,68,0.35)' }
+                              : { background: T.tableRowHoverBg, color: T.muted, border: `1px solid ${T.cardBorder}` }}
+                          >
+                            {deleting === c.id ? (
+                              <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="40" strokeDashoffset="15" strokeLinecap="round" />
+                              </svg>
+                            ) : confirmDelete === c.id ? (
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M20 6L9 17l-5-5" />
                               </svg>
-                              Copied!
-                            </>
-                          ) : (
-                            <>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                                <rect x="9" y="9" width="13" height="13" rx="2" />
-                                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                            ) : (
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
                               </svg>
-                              Copy link
-                            </>
-                          )}
-                        </button>
+                            )}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )

@@ -25,13 +25,15 @@ function WidgetsContent() {
   const { T } = useDashTheme()
   const { workspace } = useWorkspace()
 
-  const [widgets,  setWidgets]  = useState<Widget[]>([])
-  const [selected, setSelected] = useState<Widget | null>(null)
-  const [loading,  setLoading]  = useState(true)
-  const [saving,   setSaving]   = useState(false)
-  const [copied,   setCopied]   = useState(false)
-  const [creating, setCreating] = useState(false)
-  const [newName,  setNewName]  = useState('')
+  const [widgets,        setWidgets]        = useState<Widget[]>([])
+  const [selected,       setSelected]       = useState<Widget | null>(null)
+  const [loading,        setLoading]        = useState(true)
+  const [saving,         setSaving]         = useState(false)
+  const [copied,         setCopied]         = useState(false)
+  const [creating,       setCreating]       = useState(false)
+  const [newName,        setNewName]        = useState('')
+  const [deleting,       setDeleting]       = useState(false)
+  const [confirmDelete,  setConfirmDelete]  = useState(false)
 
   // Local editable state (mirrors selected widget)
   const [name,      setName]      = useState('')
@@ -48,6 +50,7 @@ function WidgetsContent() {
     setTheme(w.theme === 'auto' ? 'dark' : w.theme)
     setAccent(w.accent_color ?? '#4F3FCC')
     setRadius(w.border_radius)
+    setConfirmDelete(false)
   }
 
   const load = useCallback(async () => {
@@ -100,6 +103,26 @@ function WidgetsContent() {
     }
     setSaving(false)
     toast.success('Widget saved.')
+  }
+
+  const deleteWidget = async () => {
+    if (!selected) return
+    setDeleting(true)
+    const { error } = await createClient()
+      .from('widgets')
+      .delete()
+      .eq('id', selected.id)
+    if (error) {
+      toast.error('Failed to delete widget.')
+    } else {
+      const remaining = widgets.filter(w => w.id !== selected.id)
+      setWidgets(remaining)
+      if (remaining.length > 0) pick(remaining[0])
+      else setSelected(null)
+      setConfirmDelete(false)
+      toast.success('Widget deleted.')
+    }
+    setDeleting(false)
   }
 
   const embedSnippet = (tab: 'HTML' | 'React' | 'Vue', id: string) => {
@@ -336,6 +359,35 @@ function WidgetsContent() {
             >
               {saving ? 'Saving…' : 'Save widget'}
             </button>
+
+            {/* Delete widget */}
+            {confirmDelete ? (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="flex-1 rounded-full py-2.5 text-sm font-medium transition-opacity hover:opacity-75"
+                  style={{ background: T.tableRowHoverBg, border: `1px solid ${T.cardBorder}`, color: T.body }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={deleteWidget}
+                  disabled={deleting}
+                  className="flex-1 rounded-full py-2.5 text-sm font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
+                  style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', color: '#F87171' }}
+                >
+                  {deleting ? 'Deleting…' : 'Yes, delete'}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="w-full rounded-full py-2.5 text-sm font-medium transition-opacity hover:opacity-75"
+                style={{ background: T.tableRowHoverBg, border: `1px solid ${T.cardBorder}`, color: '#F87171' }}
+              >
+                Delete widget
+              </button>
+            )}
 
             {/* Embed panel */}
             <div
