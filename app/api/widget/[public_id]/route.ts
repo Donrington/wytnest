@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 const CORS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin':  '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 }
@@ -17,11 +17,10 @@ export async function GET(
 ) {
   const { public_id } = await params
 
-  // Anon key is sufficient — public RLS policies allow reading approved testimonials + widget config
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  )
+  // Server-side route — admin client bypasses RLS so we can serve
+  // intentionally-public data (approved testimonials + widget config)
+  // without needing per-table anon policies on workspaces.
+  const supabase = createAdminClient()
 
   const { data: widget, error } = await supabase
     .from('widgets')
@@ -30,9 +29,13 @@ export async function GET(
     .single()
 
   if (error || !widget) {
-    return NextResponse.json({ error: 'Widget not found' }, { status: 404, headers: CORS })
+    return NextResponse.json(
+      { error: 'Widget not found' },
+      { status: 404, headers: CORS },
+    )
   }
 
+  // Build testimonials query — always filter to approved only
   let query = supabase
     .from('testimonials')
     .select(`
@@ -44,9 +47,9 @@ export async function GET(
     `)
     .eq('workspace_id', widget.workspace_id)
     .eq('status', 'approved')
-    .order('is_pinned', { ascending: false })
-    .order('display_order', { ascending: true })
-    .order('created_at', { ascending: false })
+    .order('is_pinned',     { ascending: false })
+    .order('display_order', { ascending: true  })
+    .order('created_at',    { ascending: false })
     .limit(widget.max_items ?? 20)
 
   if (widget.min_rating) {
