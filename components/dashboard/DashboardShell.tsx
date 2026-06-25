@@ -510,9 +510,12 @@ export function DashboardShell({
         </AnimatePresence>
 
         <div className={cn('flex items-center gap-3 rounded-xl px-3 py-2', c && 'justify-center px-0')}>
-          <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[0.7rem] font-bold tracking-wide text-white"
+          <div className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full text-[0.7rem] font-bold tracking-wide text-white"
                style={{ background: 'linear-gradient(135deg, #4F3FCC, #7B6EF5)' }}>
-            {authUser?.initials ?? '··'}
+            {workspace?.logo_url
+              ? <img src={workspace.logo_url} alt="Avatar" className="h-full w-full object-cover" />
+              : (authUser?.initials ?? '··')
+            }
             <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400"
                   style={{ border: `2px solid ${T.avatarRing}`, transition: 'border-color 0.25s' }} title="Online" />
           </div>

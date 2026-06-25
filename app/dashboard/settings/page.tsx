@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { useWorkspace } from '@/lib/hooks/useWorkspace'
 import { createClient } from '@/lib/supabase/client'
 import { useDashTheme } from '@/lib/hooks/useDashTheme'
 import type { Theme } from '@/lib/hooks/useDashTheme'
+
+// ── Sub-components ────────────────────────────────────────────────────────────
 
 function Field({
   label, value, onChange, type = 'text', hint, readOnly, T,
@@ -62,6 +64,172 @@ function Section({ title, children, T }: { title: string; children: React.ReactN
   )
 }
 
+// ── Avatar upload ─────────────────────────────────────────────────────────────
+
+const MAX_BYTES = 10 * 1024 * 1024 // 10 MB
+
+function AvatarUpload({
+  initials,
+  logoUrl,
+  workspaceId,
+  T,
+  onUploaded,
+}: {
+  initials: string
+  logoUrl: string | null
+  workspaceId: string
+  T: Theme
+  onUploaded: (url: string) => void
+}) {
+  const fileRef  = useRef<HTMLInputElement>(null)
+  const [preview,   setPreview]   = useState<string | null>(logoUrl)
+  const [uploading, setUploading] = useState(false)
+  const [uploadErr, setUploadErr] = useState('')
+
+  // Keep preview in sync when workspace loads
+  useEffect(() => { setPreview(logoUrl) }, [logoUrl])
+
+  const handleFile = async (file: File) => {
+    setUploadErr('')
+
+    if (!file.type.startsWith('image/')) {
+      setUploadErr('Only image files are allowed.')
+      return
+    }
+    if (file.size > MAX_BYTES) {
+      setUploadErr('File must be 10 MB or smaller.')
+      return
+    }
+
+    // Optimistic local preview
+    const objectUrl = URL.createObjectURL(file)
+    setPreview(objectUrl)
+    setUploading(true)
+
+    const supabase   = createClient()
+    const path       = `${workspaceId}/avatar`
+    const { error: upErr } = await supabase.storage
+      .from('avatars')
+      .upload(path, file, { upsert: true, contentType: file.type })
+
+    if (upErr) {
+      setPreview(logoUrl)          // revert
+      setUploadErr(upErr.message)
+      setUploading(false)
+      URL.revokeObjectURL(objectUrl)
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(path)
+
+    // Append cache-buster so browser fetches the new image
+    const busted = `${publicUrl}?t=${Date.now()}`
+
+    const { error: dbErr } = await supabase
+      .from('workspaces')
+      .update({ logo_url: publicUrl, updated_at: new Date().toISOString() })
+      .eq('id', workspaceId)
+
+    setUploading(false)
+    URL.revokeObjectURL(objectUrl)
+
+    if (dbErr) {
+      setUploadErr(dbErr.message)
+      setPreview(logoUrl)
+      return
+    }
+
+    setPreview(busted)
+    onUploaded(publicUrl)
+  }
+
+  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) handleFile(file)
+    // reset so same file can be re-selected
+    e.target.value = ''
+  }
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    const file = e.dataTransfer.files?.[0]
+    if (file) handleFile(file)
+  }
+
+  return (
+    <div className="flex items-center gap-5">
+      {/* Clickable avatar */}
+      <button
+        type="button"
+        onClick={() => fileRef.current?.click()}
+        onDrop={onDrop}
+        onDragOver={e => e.preventDefault()}
+        disabled={uploading}
+        className="group relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+        style={{ background: 'linear-gradient(135deg, #4F3FCC, #7B6EF5)' }}
+        title="Click to upload avatar"
+      >
+        {preview ? (
+          <img src={preview} alt="Avatar" className="h-full w-full object-cover" />
+        ) : (
+          <span className="text-[0.9rem] font-bold text-white">{initials}</span>
+        )}
+
+        {/* Hover overlay */}
+        {!uploading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100"
+            style={{ background: 'rgba(0,0,0,0.55)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <span className="mt-1 text-[0.6rem] font-semibold text-white">Upload</span>
+          </div>
+        )}
+
+        {/* Spinner */}
+        {uploading && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-full" style={{ background: 'rgba(0,0,0,0.55)' }}>
+            <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="40" strokeDashoffset="15" strokeLinecap="round" />
+            </svg>
+          </div>
+        )}
+      </button>
+
+      {/* Label + hint */}
+      <div className="min-w-0">
+        <p style={{ color: T.heading }} className="text-sm font-medium">
+          {uploading ? 'Uploading…' : 'Profile photo'}
+        </p>
+        <p style={{ color: T.body }} className="mt-0.5 text-xs">
+          Click the avatar to upload. PNG, JPG, WebP or GIF · max 10 MB
+        </p>
+        {uploadErr && (
+          <p className="mt-1 text-xs font-medium" style={{ color: '#F87171' }}>{uploadErr}</p>
+        )}
+        {!uploading && !uploadErr && preview && preview !== logoUrl && (
+          <p className="mt-1 text-xs font-medium" style={{ color: '#34D399' }}>✓ Avatar updated</p>
+        )}
+      </div>
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={onInputChange}
+      />
+    </div>
+  )
+}
+
+// ── Main content ──────────────────────────────────────────────────────────────
+
 function SettingsContent() {
   const { T } = useDashTheme()
   const { workspace } = useWorkspace()
@@ -70,28 +238,30 @@ function SettingsContent() {
   const [email,      setEmail]      = useState('')
   const [brandName,  setBrandName]  = useState('')
   const [brandColor, setBrandColor] = useState('#4F3FCC')
+  const [logoUrl,    setLogoUrl]    = useState<string | null>(null)
   const [saving,     setSaving]     = useState(false)
   const [saved,      setSaved]      = useState(false)
   const [error,      setError]      = useState('')
 
-  // Load real auth user
+  // Load auth user
   useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
+    createClient().auth.getUser().then(({ data }) => {
       if (!data.user) return
-      const fullName = (data.user.user_metadata?.full_name as string | undefined)
-        || data.user.email?.split('@')[0]
-        || ''
-      setName(fullName)
+      setName(
+        (data.user.user_metadata?.full_name as string | undefined)
+          || data.user.email?.split('@')[0]
+          || ''
+      )
       setEmail(data.user.email ?? '')
     })
   }, [])
 
-  // Load workspace data
+  // Load workspace
   useEffect(() => {
     if (!workspace) return
     setBrandName(workspace.name ?? '')
     setBrandColor(workspace.brand_color || '#4F3FCC')
+    setLogoUrl(workspace.logo_url)
   }, [workspace])
 
   const save = async () => {
@@ -129,21 +299,26 @@ function SettingsContent() {
 
         {/* Profile */}
         <Section title="Profile" T={T}>
-          <div className="flex items-center gap-4">
+          {workspace ? (
+            <AvatarUpload
+              initials={initials}
+              logoUrl={logoUrl}
+              workspaceId={workspace.id}
+              T={T}
+              onUploaded={setLogoUrl}
+            />
+          ) : (
             <div
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-[0.9rem] font-bold text-white"
+              className="flex h-16 w-16 items-center justify-center rounded-full text-[0.9rem] font-bold text-white"
               style={{ background: 'linear-gradient(135deg, #4F3FCC, #7B6EF5)' }}
             >
               {initials}
             </div>
-            <div>
-              <p style={{ color: T.heading }} className="text-sm font-medium">Profile photo</p>
-              <p style={{ color: T.body }} className="text-xs">Update your avatar in your Supabase account.</p>
-            </div>
-          </div>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Full name" value={name} onChange={setName} T={T} />
-            <Field label="Email address" value={email} readOnly hint="Email cannot be changed here." type="email" T={T} />
+            <Field label="Full name"      value={name}  onChange={setName}  T={T} />
+            <Field label="Email address"  value={email} readOnly hint="Email cannot be changed here." type="email" T={T} />
           </div>
         </Section>
 
@@ -204,7 +379,9 @@ function SettingsContent() {
         <Section title="Plan & billing" T={T}>
           <div className="flex items-center justify-between">
             <div>
-              <p style={{ color: T.heading }} className="text-sm font-semibold capitalize">{workspace?.plan ?? 'Free'} plan</p>
+              <p style={{ color: T.heading }} className="text-sm font-semibold capitalize">
+                {workspace?.plan ?? 'Free'} plan
+              </p>
               <p style={{ color: T.body }} className="mt-0.5 text-xs">
                 {workspace?.plan === 'agency'
                   ? 'Unlimited campaigns, widgets, and team members.'
@@ -264,12 +441,10 @@ function SettingsContent() {
           </div>
         </Section>
 
-        {/* Error */}
         {error && (
           <p style={{ color: '#F87171' }} className="text-sm">{error}</p>
         )}
 
-        {/* Save */}
         <div className="flex justify-end">
           <button
             onClick={save}
